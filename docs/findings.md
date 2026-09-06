@@ -1,0 +1,85 @@
+# Hallazgos de la auditoria
+
+Origen: auditoria previa a la migracion (backend Django + frontend Angular).
+Estos hallazgos **no se corrigen ahora**: se atienden en sus tareas del roadmap.
+Django y Angular no se modifican fuera de esas tareas.
+
+Severidad: `CRITICAL` / `HIGH` / `MEDIUM` / `LOW`.
+Categorias: BUG / SECURITY / ARCHITECTURE / PERFORMANCE / DATABASE / FRONTEND / API CONTRACT / TESTING / MAINTAINABILITY.
+
+Prefijos de ID:
+- `BUG-DJANGO-NNN`: bug real del backend actual (no replicar tal cual en NestJS).
+- `SECRET-NNN`: exposicion o mal manejo de secretos/credenciales.
+- `SECURITY-NNN` / `ARCH-NNN` / `PERF-NNN` / `APIC-NNN` / `DB-NNN` / `TEST-NNN`: otros.
+
+---
+
+## CRITICAL
+
+| ID | Cat. | Ubicacion | Resumen | Accion prevista |
+|---|---|---|---|---|
+| BUG-DJANGO-001 | SECURITY | `config/.env.prod` | `DJANGO_ENV=dev` y `DEBUG=True` en el archivo de produccion -> API con DEBUG activo (stack traces, settings expuestos). | NestJS nunca expone stack traces; filtro global (Fase 1.4). Arreglo del `.env` en tarea propia de Django. |
+| SECRET-001 | SECURITY | `config/.env.dev`, `config/.env.prod` | Contienen valores reales (`SECRET_KEY`, `DATABASE_URL`, `CLOUDINARY_API_SECRET`, `EMAIL_HOST_PASSWORD`). No trackeados, pero presentes en el arbol. | Verificar historial git; rotar secretos si hay duda; en este repo `.env` fuera de git desde el commit 1. |
+| SECRET-002 | SECURITY | `db.sqlite3` (versionado) | Incluye `usuarios_usuario` con 6 filas: hashes de contrasena + emails + usernames. | `git rm --cached db.sqlite3` + `.gitignore` en tarea propia; tratar hashes como comprometidos si los usuarios son reales. |
+
+## HIGH
+
+| ID | Cat. | Ubicacion | Resumen | Accion prevista |
+|---|---|---|---|---|
+| BUG-DJANGO-002 | SECURITY | `apps/usuarios/views.py` ResetPasswordView | La nueva contrasena se fija igual al `username` (predecible). | NestJS: contrasena aleatoria + entrega segura o flujo "set password". Fase 2.11. |
+| BUG-DJANGO-003 | BUG | `apps/parroquias/views.py` GET filtro `colonia` | `filter(coloniaId__nombre__icontains=...)`: el campo es `name`, no `nombre` -> FieldError -> 500 si llega `?colonia=`. El FE no lo envia hoy. | NestJS: filtrar por `colonia.name`. Fase 6. |
+| BUG-DJANGO-004 | SECURITY | varios `views.py` (carrusel, padres, noticias, documentos, usuarios) | `except Exception as e: return Response({"error": str(e)})` filtra mensajes internos al cliente. | NestJS: error generico + log interno. Fase 8.4. |
+| BUG-DJANGO-005 | SECURITY | `config/settings.py` + serializers/vistas de usuario | `AUTH_PASSWORD_VALIDATORS` configurado pero nunca invocado; se aceptan contrasenas arbitrarias. | NestJS: reglas equivalentes en DTO/servicio. Fase 2.8/2.11. |
+| BUG-DJANGO-020 | SECURITY | `apps/usuarios/views.py` UsuarioAPIView.delete | Soft-delete no toca `is_active`; solo `cambiar-estado` lo sincroniza -> un usuario "eliminado" por DELETE puede seguir haciendo login. | NestJS: nocion unica de "activo" y bloqueo consistente. Fase 2.4. |
+
+## MEDIUM
+
+| ID | Cat. | Ubicacion | Resumen | Accion prevista |
+|---|---|---|---|---|
+| BUG-DJANGO-006 | API CONTRACT | FE `admin/users/services/users.ts` vs `apps/usuarios/urls.py` | FE llama `POST /users/usuarios/cargar-por-csv/`; backend expone `/cargar-csv/` -> carga masiva de usuarios rota (404). | NestJS: soportar ambas rutas (alias) y/o corregir el frontend (tarea propia). Fase 2.12. |
+| BUG-DJANGO-007 | SECURITY | serializers de noticias, articulos, documentos, decanatos, colonias, parroquias | `fields=__all__` con `read_only_fields` sin `createdBy` -> un PUT puede reasignar `createdBy` (mass assignment). | NestJS: ValidationPipe whitelist + DTOs explicitos. Fases 3-7. |
+| BUG-DJANGO-008 | ARCHITECTURE | `apps/usuarios/views.py` list y detail | Solo `IsAuthenticated`: cualquier rol enumera todos los usuarios (email, rol) y consulta cualquiera por id (IDOR / info disclosure). | NestJS: RolesGuard (admin/super), validado contra la app real. Fase 2.6/2.7. |
+| BUG-DJANGO-009 | BUG | `apps/usuarios/views.py` POST | Pasa `role=data.get(role)`; si falta, envia `None` y rompe el `default=user` -> IntegrityError. El FE siempre envia `role`. | NestJS: DTO con `role` requerido y default correcto. Fase 2.8. |
+| BUG-DJANGO-010 | API CONTRACT | `apps/usuarios/serializers.py` update() | Ignora `password` en `PUT /usuarios/{id}/`; el FE lo envia como opcional -> puede parecer que se cambio. | Decidir: soportarlo o documentar y ajustar FE. Fase 2.9. |
+| SECURITY-003 | SECURITY | `config/settings.py` | `CORS_ALLOW_ALL_ORIGINS = True`. | NestJS: allowlist por env (`CORS_ORIGINS`). Fase 1.9. |
+| SECURITY-006 | SECURITY | `apps/auth_token`, `apps/usuarios` | Sin rate limiting en `login`, `change-password`, `reset-password`. | NestJS: throttler. Fase 8.1. |
+| SECURITY-008 | SECURITY | `apps/core/file_validators.py` | Validacion por extension + `mimetypes.guess_type(nombre)` + `size`, no por contenido. | NestJS: sniff de magic bytes. Fase 4. |
+| BUG-DJANGO-011 | DATABASE | noticias/articulos/documentos GET filtro `tags` | `queryset.extra(where=[... jsonb_array_elements_text ...])`: SQL crudo, `.extra()` deprecado, rompe en SQLite local. Parametrizado (sin inyeccion). | NestJS: QueryBuilder con EXISTS encapsulado + tests. Fase 7. |
+| BUG-DJANGO-012 | ARCHITECTURE | vistas de detalle/edicion de varios modulos | Soft-delete incoherente: unos filtran `isActive=True`, otros no; el detalle a veces devuelve filas borradas. | Definir comportamiento canonico (ADR). Fase 3+. |
+| BUG-DJANGO-013 | BUG | decanatos/colonias/parroquias delete() | Fijan `isActive=False` + `deletedBy` pero no `deletedAt`. | NestJS: soft-delete uniforme (`deletedAt` siempre). Fase 8.3. |
+| APIC-002 | API CONTRACT | respuestas de varios endpoints | Sobres inconsistentes: usuarios `{mensaje,data}`; resto objeto plano; deletes `{detail}` con 204 + body. | Inventariar por endpoint que lee el FE (Tarea 0.2); unificar 204 sin body como delta intencional. Fase 8.3. |
+| APIC-003 | API CONTRACT | `apps/padres/views.py` GET | Devuelve array plano si no hay `page`; `Reverends.getAllPadres` (FE) espera `{results,count}`. `getAllPadres` parece codigo muerto. | Definir forma canonica. Fase 4. |
+| APIC-004 | API CONTRACT | manejo de errores global | Formas mezcladas: `{detail}` vs `{error}` vs `{campo:[msgs]}`. El FE `login` lee `err.error.detail`. | NestJS: filtro global con formas compatibles. Fase 1.4. |
+| TEST-001 | TESTING | ambos proyectos | Cobertura de tests nula -> sin red de seguridad de referencia. | Arnes de paridad + tests por slice. Fases 0.7 y 2+. |
+
+## LOW
+
+| ID | Cat. | Ubicacion | Resumen | Accion prevista |
+|---|---|---|---|---|
+| BUG-DJANGO-015 | BUG | `apps/core/cloudinary_folders.py` | Compara `env == "production"` pero el entorno real es `"prod"` -> la rama de produccion nunca se ejecuta; todo va a `dev/diocesis/...`. | NestJS: corregir conscientemente. Fase 4 / 8.5. |
+| ARCH-007 | MAINTAINABILITY | raiz de `diocesis-backend-python/` | Directorios muertos (articulos/, carrusel/, ... con solo `__pycache__/` y `migrations/`); el codigo vive en `apps/`. | No migrar. Limpieza opcional en tarea propia de Django. |
+| ARCH-008 | MAINTAINABILITY | `apps/auth_token` | `models.py` vacio; `CustomTokenObtainPairView(TokenObtainPairView): pass`. | NestJS: modulo `auth` propio. Fase 2. |
+| ARCH-009 | MAINTAINABILITY | padres/articulos views, settings.py | `print()` de depuracion. | No portar. |
+| BUG-DJANGO-014 | BUG | `apps/usuarios/serializers.py` create() | `create_user()` (ya hashea) + `set_password()` + `save()` otra vez (doble hashing, inofensivo). | NestJS: un solo hashing. Fase 2.8. |
+| PERF-001 | PERFORMANCE | FE `parish-details` | 3 requests extra (decanato, padre, colonia) por vista de parroquia. | No es regresion a preservar; posible respuesta expandida post-migracion. |
+| PERF-003 | PERFORMANCE | esquema de DB | Sin indices mas alla de PK/unique/FK; filtros `icontains` -> seq scan. Dataset diminuto hoy. | Revisar al escalar. |
+| PERF-004 | PERFORMANCE | vistas con Cloudinary | `cloudinary.config()` en cada request. | NestJS: servicio con config unica. Fase 4. |
+
+---
+
+## Riesgos de migracion (resumen)
+
+| # | Riesgo | Mitigacion |
+|---|---|---|
+| R1 | Esquema real de produccion no disponible localmente (sqlite desincronizado). | `pg_dump --schema-only` + conteos (Tarea 0.3). |
+| R2 | Compatibilidad de tokens JWT vigentes en el corte. | ADR-002 (corte duro vs. compartir `SECRET_KEY`). |
+| R3 | Hashes de contrasena Django (`pbkdf2_sha256$...`). | Verificador PBKDF2 compatible en auth. |
+| R4 | Nombres de campos camelCase en toda la API. | Mapeo explicito de columnas + contract tests. |
+| R5 | `isActive` vs `is_active` en usuarios. | Unificar y probar login/estado con paridad. |
+| R6 | Split publico/privado por recurso. | Matriz de acceso + e2e por endpoint. |
+| R7 | Paginacion estilo DRF (`{count,next,previous,results}`). | Helper de paginacion identico (Fase 1.6). |
+| R8 | Busqueda de `tags` sobre jsonb. | Reproducir con QueryBuilder + tests de paridad. |
+| R9 | Cloudinary: se guarda `secure_url`; carpeta `dev/diocesis/...` por BUG-DJANGO-015. | Servicio unico; corregir carpeta conscientemente. |
+| R10 | Inconsistencias de soft-delete y 204-con-body. | Congelar comportamiento actual primero. |
+| R11 | CSV de usuarios roto (404) del que depende el FE. | Alias + tarea de frontend. |
+| R12 | Host de despliegue distinto a Render. | Fase 9 (solo preparacion). |
