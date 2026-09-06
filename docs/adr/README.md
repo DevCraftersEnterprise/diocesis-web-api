@@ -17,10 +17,10 @@ Archivo `NNN-titulo-en-kebab-case.md` con estas secciones:
 
 | ADR | Titulo | Estado |
 |---|---|---|
-| 001 | Seleccion de ORM (TypeORM) | pendiente de redactar (Tarea 0.4) |
-| 002 | Estrategia de autenticacion (JWT compatible con simplejwt + hashes Django) | pendiente de redactar (Tarea 0.4) |
-| 003 | Estructura modular del proyecto NestJS | pendiente de redactar (Tarea 0.4) |
-| 004 | Estrategia de migracion de la base de datos (baseline, sin recrear esquema) | pendiente de redactar (Tarea 0.4) |
+| [001](001-orm.md) | Seleccion de ORM (TypeORM) | aceptado (0.4) |
+| [002](002-autenticacion.md) | Autenticacion y autorizacion (JWT propio HS256, corte duro de tokens, verificar PBKDF2 heredado + migracion a argon2id) | aceptado (0.4) |
+| [003](003-estructura-modular.md) | Estructura del proyecto NestJS (monolito modular) | aceptado (0.4) |
+| [004](004-migracion-db.md) | Migracion de la base de datos (baseline sin recrear esquema; FKs como prod; CHECK y carrusel como migraciones aditivas) | aceptado (0.4) |
 
 ## Temas anotados para revisar mas adelante (aun no son ADR)
 

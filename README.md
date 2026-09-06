@@ -61,12 +61,14 @@ Django permanece intacto durante toda la migración y se usa como oráculo de pa
 | `docs/findings.md`            | Hallazgos de la auditoría (`BUG-DJANGO-*`, `SECRET-*`, seguridad, arquitectura...). |
 | `docs/adr/`                   | Registros de decisiones de arquitectura (ADR).                                      |
 
-## Decisiones tomadas (pendientes de redactar como ADR)
+## Decisiones de arquitectura
 
-- **ADR-001** ORM: **TypeORM** (esquema PostgreSQL existente, `synchronize: false`).
-- **ADR-002** Autenticación: JWT compatible con simplejwt + verificación de hashes PBKDF2 de Django.
-- **ADR-003** Estructura: monolito modular NestJS (sin hexagonal/CQRS completos).
-- **ADR-004** Base de datos: migración _baseline_ por introspección; no se recrea el esquema.
+Redactadas y aceptadas en `docs/adr/` (Tarea 0.4):
+
+- **[ADR-001](docs/adr/001-orm.md)** ORM: **TypeORM**, `synchronize: false`.
+- **[ADR-002](docs/adr/002-autenticacion.md)** Autenticación: JWT propio HS256, corte duro de tokens, verificar hashes PBKDF2 heredados + migración progresiva a `argon2id`.
+- **[ADR-003](docs/adr/003-estructura-modular.md)** Estructura: monolito modular NestJS (sin hexagonal/CQRS).
+- **[ADR-004](docs/adr/004-migracion-db.md)** Base de datos: migración _baseline_ sin recrear el esquema; FKs como en prod; `CHECK` de `type`/`role` y alineación de `carrusel` como migraciones aditivas.
 
 ### Anotado para revisar más adelante
 
