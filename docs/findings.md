@@ -11,6 +11,10 @@ Prefijos de ID:
 - `BUG-DJANGO-NNN`: bug real del backend actual (no replicar tal cual en NestJS).
 - `SECRET-NNN`: exposicion o mal manejo de secretos/credenciales.
 - `SECURITY-NNN` / `ARCH-NNN` / `PERF-NNN` / `APIC-NNN` / `DB-NNN` / `TEST-NNN`: otros.
+- `FE-NNN`: hallazgo en el frontend Angular.
+
+Actualizado en la Tarea 0.2: nuevos BUG-DJANGO-021, BUG-DJANGO-022, FE-001..FE-003;
+matizados BUG-DJANGO-010 y APIC-003.
 
 ---
 
@@ -31,6 +35,7 @@ Prefijos de ID:
 | BUG-DJANGO-004 | SECURITY | varios `views.py` (carrusel, padres, noticias, documentos, usuarios) | `except Exception as e: return Response({"error": str(e)})` filtra mensajes internos al cliente. | NestJS: error generico + log interno. Fase 8.4. |
 | BUG-DJANGO-005 | SECURITY | `config/settings.py` + serializers/vistas de usuario | `AUTH_PASSWORD_VALIDATORS` configurado pero nunca invocado; se aceptan contrasenas arbitrarias. | NestJS: reglas equivalentes en DTO/servicio. Fase 2.8/2.11. |
 | BUG-DJANGO-020 | SECURITY | `apps/usuarios/views.py` UsuarioAPIView.delete | Soft-delete no toca `is_active`; solo `cambiar-estado` lo sincroniza -> un usuario "eliminado" por DELETE puede seguir haciendo login. | NestJS: nocion unica de "activo" y bloqueo consistente. Fase 2.4. |
+| BUG-DJANGO-021 | SECURITY | `apps/usuarios/views.py` UsuarioAPIView.put / .delete | Solo exigen `IsAuthenticated`; la unica regla de rol es "un `admin` no puede tocar a un `super`". Un rol `user` puede editar o desactivar (soft-delete) a cualquier usuario, incluido un `super`. `UsuarioSerializer.update()` tampoco lo impide. El layout admin muestra el menu completo a cualquier autenticado (no aplica `requiredRole`), asi que la ruta es alcanzable desde la UI. Detectado en Tarea 0.2. | NestJS: `RolesGuard` (admin/super) en `PUT`/`DELETE` de usuarios + jerarquia de roles explicita. Fase 2.6 / 2.9. |
 
 ## MEDIUM
 
@@ -40,15 +45,16 @@ Prefijos de ID:
 | BUG-DJANGO-007 | SECURITY | serializers de noticias, articulos, documentos, decanatos, colonias, parroquias | `fields=__all__` con `read_only_fields` sin `createdBy` -> un PUT puede reasignar `createdBy` (mass assignment). | NestJS: ValidationPipe whitelist + DTOs explicitos. Fases 3-7. |
 | BUG-DJANGO-008 | ARCHITECTURE | `apps/usuarios/views.py` list y detail | Solo `IsAuthenticated`: cualquier rol enumera todos los usuarios (email, rol) y consulta cualquiera por id (IDOR / info disclosure). | NestJS: RolesGuard (admin/super), validado contra la app real. Fase 2.6/2.7. |
 | BUG-DJANGO-009 | BUG | `apps/usuarios/views.py` POST | Pasa `role=data.get(role)`; si falta, envia `None` y rompe el `default=user` -> IntegrityError. El FE siempre envia `role`. | NestJS: DTO con `role` requerido y default correcto. Fase 2.8. |
-| BUG-DJANGO-010 | API CONTRACT | `apps/usuarios/serializers.py` update() | Ignora `password` en `PUT /usuarios/{id}/`; el FE lo envia como opcional -> puede parecer que se cambio. | Decidir: soportarlo o documentar y ajustar FE. Fase 2.9. |
+| BUG-DJANGO-010 | API CONTRACT | `apps/usuarios/serializers.py` update() | `update()` descarta `password` en `PUT /usuarios/{id}/`. El form de edicion del admin **no envia** `password` (solo `username,email,role`) -> sin impacto real hoy; el tipo `UserEditForm` lo permite pero ningun componente lo usa. Matizado en Tarea 0.2. | NestJS: DTO de update sin `password`; cambio de contrasena por endpoint dedicado. Fase 2.9. Ver FE-001. |
 | SECURITY-003 | SECURITY | `config/settings.py` | `CORS_ALLOW_ALL_ORIGINS = True`. | NestJS: allowlist por env (`CORS_ORIGINS`). Fase 1.9. |
 | SECURITY-006 | SECURITY | `apps/auth_token`, `apps/usuarios` | Sin rate limiting en `login`, `change-password`, `reset-password`. | NestJS: throttler. Fase 8.1. |
 | SECURITY-008 | SECURITY | `apps/core/file_validators.py` | Validacion por extension + `mimetypes.guess_type(nombre)` + `size`, no por contenido. | NestJS: sniff de magic bytes. Fase 4. |
 | BUG-DJANGO-011 | DATABASE | noticias/articulos/documentos GET filtro `tags` | `queryset.extra(where=[... jsonb_array_elements_text ...])`: SQL crudo, `.extra()` deprecado, rompe en SQLite local. Parametrizado (sin inyeccion). | NestJS: QueryBuilder con EXISTS encapsulado + tests. Fase 7. |
 | BUG-DJANGO-012 | ARCHITECTURE | vistas de detalle/edicion de varios modulos | Soft-delete incoherente: unos filtran `isActive=True`, otros no; el detalle a veces devuelve filas borradas. | Definir comportamiento canonico (ADR). Fase 3+. |
+| BUG-DJANGO-022 | BUG | `apps/decanatos/views.py` / `apps/colonias/views.py` GET detail + FE `parish-details.ts` | El detalle de decanato/colonia filtra `isActive=True` -> 404 si esta soft-deleted. `parish-details` hace `forkJoin({decanato, padre, colonia})` sin handler de error: si una parroquia referencia un decanato/colonia soft-deleted, la pagina publica de detalle rompe (queda cargando). Relacionado con BUG-DJANGO-012. Detectado en Tarea 0.2. | NestJS: comportamiento canonico de soft-delete en detalle (o no filtrar en detalle); el FE puede necesitar un handler de error (tarea de frontend). Fase 3 / 6. |
 | BUG-DJANGO-013 | BUG | decanatos/colonias/parroquias delete() | Fijan `isActive=False` + `deletedBy` pero no `deletedAt`. | NestJS: soft-delete uniforme (`deletedAt` siempre). Fase 8.3. |
 | APIC-002 | API CONTRACT | respuestas de varios endpoints | Sobres inconsistentes: usuarios `{mensaje,data}`; resto objeto plano; deletes `{detail}` con 204 + body. | Inventariar por endpoint que lee el FE (Tarea 0.2); unificar 204 sin body como delta intencional. Fase 8.3. |
-| APIC-003 | API CONTRACT | `apps/padres/views.py` GET | Devuelve array plano si no hay `page`; `Reverends.getAllPadres` (FE) espera `{results,count}`. `getAllPadres` parece codigo muerto. | Definir forma canonica. Fase 4. |
+| APIC-003 | API CONTRACT | `apps/padres/views.py` GET vs `decanatos`/`colonias` GET | `/padres/` pagina solo si llega `page`/`page_size` (si no, array plano); `/decanatos/` y `/colonias/` paginan SIEMPRE. `parishes.ts` usa `getAllPadres({isActive:true})` sin `page` y **depende del array plano**; `getAllDecanatos`/`getAllColonias` dependen del objeto paginado. No es codigo muerto. NestJS debe preservar ambas formas exactas. Matizado en Tarea 0.2. | Replicar por endpoint; ver `contract-matrix.md`. Fase 3 / 4. |
 | APIC-004 | API CONTRACT | manejo de errores global | Formas mezcladas: `{detail}` vs `{error}` vs `{campo:[msgs]}`. El FE `login` lee `err.error.detail`. | NestJS: filtro global con formas compatibles. Fase 1.4. |
 | TEST-001 | TESTING | ambos proyectos | Cobertura de tests nula -> sin red de seguridad de referencia. | Arnes de paridad + tests por slice. Fases 0.7 y 2+. |
 
@@ -64,6 +70,9 @@ Prefijos de ID:
 | PERF-001 | PERFORMANCE | FE `parish-details` | 3 requests extra (decanato, padre, colonia) por vista de parroquia. | No es regresion a preservar; posible respuesta expandida post-migracion. |
 | PERF-003 | PERFORMANCE | esquema de DB | Sin indices mas alla de PK/unique/FK; filtros `icontains` -> seq scan. Dataset diminuto hoy. | Revisar al escalar. |
 | PERF-004 | PERFORMANCE | vistas con Cloudinary | `cloudinary.config()` en cada request. | NestJS: servicio con config unica. Fase 4. |
+| FE-001 | FRONTEND | `diocesis-frontend-material` admin de usuarios | No hay UI para cambiar/resetear la contrasena de un usuario: `ChangePasswordView` (#9) y `ResetPasswordView` (#10) no se invocan desde ningun sitio. Hueco funcional. Detectado en Tarea 0.2. | Decidir si NestJS mantiene esos endpoints y si el FE gana la pantalla (tarea de frontend). |
+| FE-002 | FRONTEND | `admin/reverends/reverends.ts`, `admin/documents/documents.ts`, varios | `debugger;` olvidado en `reverends.ts` save(); sentencia de plantilla vacia en `documents.ts` save(); toasts que dicen "creada/o" tambien al editar (newspaper, articles, reverends). Detectado en Tarea 0.2. | Limpieza en las tareas de frontend cuando se toquen esos modulos. |
+| FE-003 | FRONTEND | `admin/carousel/carousel.ts` | El handler de error pasa `err.error` (objeto `{"error": "..."}`) a `toastr.error` -> muestra `[object Object]`. Detectado en Tarea 0.2. | Al migrar carrusel, ajustar el FE para leer `err.error.error` / `err.error.detail`. |
 
 ---
 
