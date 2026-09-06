@@ -3,6 +3,10 @@
 
 # Salida de compilación
 /dist
+*.tsbuildinfo
+
+# Lint
+.eslintcache
 
 # Variables de entorno (los secretos reales nunca se versionan)
 .env
