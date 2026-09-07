@@ -27,14 +27,21 @@
      `docs/db/schema.sql`) y se marca como **ya aplicada** (no se ejecuta) contra:
      produccion, la copia de Neon y cualquier BD restaurada desde `schema.sql`.
    - Solo se ejecuta de verdad en **BDs vacias** (dev/CI creadas de cero).
-   - Se **autora a mano** a partir de `schema.sql` (`CREATE TABLE` /
-     `ALTER TABLE ADD CONSTRAINT` / `CREATE INDEX`), **preservando los nombres de
-     constraints e indices de Django** (`articulos_articulo_pkey`,
-     `parroquias_parroquia_coloniaId_id_..._fk_...`, etc.) para que sea un no-op real
-     contra prod.
+   - **Ajuste de implementacion (Tarea 1.3).** En vez de transcribir el DDL a mano al
+     `.ts` (~1200 lineas, riesgo de drift), `up()` ejecuta **`docs/db/baseline.sql`
+     verbatim**: una copia SANEADA de `schema.sql` cuyo unico delta es el preambulo
+     (`\restrict`/`\unrestrict`, `SET ...`, `set_config`, cabeceras `-- Dumped`) y
+     `CREATE SCHEMA public` -> `CREATE SCHEMA IF NOT EXISTS public`. Asi hay **una sola
+     fuente de verdad** (el dump) y los nombres de constraints/indices de Django quedan
+     intactos por construccion. La alternativa "autogenerada" descartada mas abajo lo era
+     por generar nombres _de TypeORM_; ejecutar el dump no incurre en eso. El saneado se
+     verifica con `git diff --no-index docs/db/schema.sql docs/db/baseline.sql`.
+   - `down()` **lanza error a proposito**: recrear el esquema borra datos y la tabla
+     `migrations` vive en el esquema que se caeria. Reiniciar una BD desechable = `dropdb`
+     + `createdb`, no `migration:revert`.
    - Marcar como aplicada en una BD existente = `INSERT` de la fila de la baseline en la
-     tabla `migrations` de TypeORM (comando exacto documentado en la propia migracion).
-     TypeORM no tiene `--fake`.
+     tabla `migrations` de TypeORM (comando exacto en `docs/db/migrations.md` y en la
+     propia migracion). TypeORM 0.3 no tiene `--fake`.
 
 3. **Tabla de control:** TypeORM usa `migrations` (por defecto). `django_migrations` se
    **deja intacta** (registro de Django; util de referencia). Coexisten sin conflicto.
@@ -74,11 +81,12 @@
    NestJS **no las mapea, no las toca, no las borra.** Permanecen en la BD sin uso. Su
    limpieza (destructiva) queda fuera de alcance.
 
-9. **Verificacion del baseline.** Con las entidades listas, `typeorm migration:generate`
-   contra una BD restaurada de `schema.sql` debe dar **diff estructural vacio** (solo se
-   tolera ruido cosmetico de nombres, que se ignora conscientemente). Cualquier diff
-   estructural = delta no intencionado -> se reconcilia. Este check se automatiza en CI
-   (Fase 1.3).
+9. **Verificacion del baseline.** Con las entidades listas (Fase 2+), `typeorm
+   migration:generate` contra una BD restaurada de `schema.sql` debe dar **diff
+   estructural vacio** (solo se tolera ruido cosmetico de nombres, que se ignora
+   conscientemente). Cualquier diff estructural = delta no intencionado -> se reconcilia.
+   En la Tarea 1.3 no es posible (aun no hay entidades); el check se automatiza en CI
+   cuando existan.
 
 10. **Deltas futuros.** Cualquier cambio de esquema posterior a la baseline = migracion
     TypeORM normal **con su justificacion** (referencia a un finding o a un ADR). Nunca
