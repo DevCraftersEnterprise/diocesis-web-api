@@ -1,0 +1,26 @@
+name: diocesis-oracle
+
+# Base de datos aislada para usar el Django actual como oraculo de paridad.
+# NO es la BD de desarrollo de NestJS (esa se define en la Fase 1.2).
+# Puerto host 5433 para no chocar con un PostgreSQL local en 5432.
+
+services:
+  db:
+    image: postgres:16
+    container_name: diocesis-oracle-db
+    environment:
+      POSTGRES_USER: oracle
+      POSTGRES_PASSWORD: oracle
+      POSTGRES_DB: diocesis_oracle
+    ports:
+      - '5433:5432'
+    volumes:
+      - oracle-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U oracle -d diocesis_oracle']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  oracle-db-data:

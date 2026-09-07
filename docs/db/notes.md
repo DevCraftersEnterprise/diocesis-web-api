@@ -25,12 +25,15 @@ createdBy_id, isActive`. **Le faltan** `updatedAt`, `deletedAt`, `updatedBy_id`,
 `deletedBy_id` (las que añade la migracion 0003 y que el modelo `Carrusel(BaseModel)`
 actual espera).
 
-`CarruselView.put` y `CarruselView.delete` hacen `carrusel.deletedAt = ...;
-carrusel.deletedBy = ...; carrusel.save()`. Contra el esquema real de prod eso intenta
-escribir columnas inexistentes -> **error de columna / 500** (a confirmar en runtime 0.6/0.7;
-puede que el deploy de prod ejecute codigo anterior a esa refactorizacion).
+**Aclaracion (Tarea 0.6):** prod es **auto-consistente**. El codigo que corre en prod
+(`fe3fc98`) tiene `Carrusel(models.Model)` de 6 campos y **funciona**. El commit que
+convierte `Carrusel` en `BaseModel` + genera la migracion `0003` (`83a24be`) esta en el
+`main` local pero **nunca se desplego**, y `render.yaml` no ejecuta `migrate`. Verificado
+en el oraculo: con el codigo local `GET /api/carrusel/` da 500
+(`column carrusel_carrusel.updatedAt does not exist`); con `fe3fc98` funciona.
+El riesgo real es desplegar esos commits sin correr `migrate` a mano. Ver BUG-DJANGO-023.
 
-**Decision para NestJS (a fijar en la fase de carrusel, Fase 5 / ADR-004):**
+**Decision para NestJS (Fase 5 / ADR-004, DQ3-B):**
 - **Opcion A (paridad):** la entidad `Carrusel` tiene solo las 6 columnas reales. Sin
   `updatedAt`/`deletedAt`/`updatedBy`/`deletedBy`. El `DELETE` solo hace `isActive=false`.
   Coincide con lo que la BD de prod permite hoy y con lo que el frontend espera

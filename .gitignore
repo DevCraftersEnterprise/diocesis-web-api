@@ -19,6 +19,10 @@
 # Logs
 *.log
 
+# Oraculo de paridad (Tarea 0.6): venv de Django y semilla con datos reales
+/.venv-oracle
+docs/oracle/seed*.sql
+
 # Archivos del sistema operativo
 .DS_Store
 Thumbs.db
