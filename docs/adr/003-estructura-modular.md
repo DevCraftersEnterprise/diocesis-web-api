@@ -62,8 +62,16 @@ Reglas transversales:
   CJS, ecosistema probado) es el terreno firme. Revisar el salto a 12 como tarea propia
   cuando su tooling ESM madure.
 - **TypeScript 5.9** (no 6): TS 6 introdujo cambios de comportamiento (p. ej. `rootDir`
-  obligatorio con `outDir`) y typescript-eslint aun no lo soporta oficialmente.
+  obligatorio con `outDir`) y typescript-eslint aun no lo soporta oficialmente. `tsconfig`
+  sin `rootDir` (TS lo infiere) y sin `incremental` (footgun con `deleteOutDir`).
+- **Paquetes `@nestjs/*` companion:** fijar a la major compatible con Nest 11, que es
+  **CJS**. Las majors mas nuevas se renumeraron para alinearse con Nest 12 y son
+  **ESM-only** (rompen Jest CJS). Ej.: `@nestjs/config` -> `^4` (no la 12);
+  aplicar el mismo criterio a `@nestjs/jwt`, `@nestjs/typeorm`, `@nestjs/throttler`,
+  `@nestjs/passport`, `@nestjs/swagger` cuando se añadan.
 - **Jest 30 + ts-jest** (CJS), **CommonJS** en `tsconfig` (`module: commonjs`).
+- `npm start` = `nest build && node dist/main` (el `nest start` de una pasada falla de
+  forma intermitente en Windows); `npm run start:dev` = `nest start --watch`.
 - **Linter: ESLint 10 (flat config) + typescript-eslint** *type-checked*, en lugar del
   `oxlint` que trae por defecto el CLI de Nest: se busca la red de reglas con informacion
   de tipos (`no-explicit-any` en error, `no-floating-promises` en error, familia
