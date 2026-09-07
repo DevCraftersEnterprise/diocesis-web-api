@@ -23,6 +23,9 @@
 /.venv-oracle
 docs/oracle/seed*.sql
 
+# Arnes de paridad (Tarea 0.7): baselines grabados con datos reales
+test/parity/__baselines__/
+
 # Archivos del sistema operativo
 .DS_Store
 Thumbs.db
