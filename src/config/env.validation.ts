@@ -12,7 +12,8 @@ import {
   MinLength,
   validateSync,
 } from 'class-validator';
-import type { NodeEnv } from './config.types';
+import type { LogLevel, NodeEnv } from './config.types';
+import { LOG_LEVELS } from './config.types';
 
 const NODE_ENVS: NodeEnv[] = ['development', 'production', 'test'];
 
@@ -78,6 +79,12 @@ export class EnvSchema {
   @IsOptional()
   @IsString()
   CORS_ORIGINS = '';
+
+  @IsOptional()
+  @IsEnum(LOG_LEVELS, {
+    message: `LOG_LEVEL debe ser uno de: ${LOG_LEVELS.join(', ')}`,
+  })
+  LOG_LEVEL: LogLevel = 'info';
 }
 
 export function validateEnv(raw: NodeJS.ProcessEnv): EnvSchema {

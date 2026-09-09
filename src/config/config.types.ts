@@ -29,10 +29,28 @@ export interface CorsConfig {
   origins: string[];
 }
 
+export type LogLevel =
+  'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace' | 'silent';
+
+export const LOG_LEVELS: LogLevel[] = [
+  'fatal',
+  'error',
+  'warn',
+  'info',
+  'debug',
+  'trace',
+  'silent',
+];
+
+export interface LogConfig {
+  level: LogLevel;
+}
+
 export interface Config {
   app: AppConfig;
   database: DatabaseConfig;
   jwt: JwtConfig;
   cloudinary: CloudinaryConfig;
   cors: CorsConfig;
+  log: LogConfig;
 }
