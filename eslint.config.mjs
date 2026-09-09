@@ -39,4 +39,12 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-return': 'warn',
     },
   },
+  {
+    // En specs los mocks de jest disparan falsos positivos de `unbound-method`
+    // (`expect(mock.metodo).toHaveBeenCalled...`). Se relaja solo para tests.
+    files: ['**/*.spec.ts', 'test/**/*.ts'],
+    rules: {
+      '@typescript-eslint/unbound-method': 'off',
+    },
+  },
 );
