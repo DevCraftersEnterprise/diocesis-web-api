@@ -16,6 +16,10 @@ delta anotado en **Estado** y justificado en `findings.md`.
 
 - **Base URL**: `environment.apiUrl` = `<host>/api`. Dev `http://127.0.0.1:8000/api`;
   prod `https://diocesis-backend.onrender.com/api`. **Todas las rutas terminan en `/`.**
+  NestJS (Tarea 1.10): `setGlobalPrefix('api', { exclude: ['health'] })` en `configureApp`
+  (`src/app.setup.ts`, compartido por `main.ts` y los tests e2e). Express corre sin
+  `strict routing`, asi que `/api/x` y `/api/x/` resuelven igual; `/health` queda fuera
+  del prefijo.
 - **Auth**: `authInterceptor` añade `Authorization: Bearer <access>` a **toda** peticion
   si hay token en `localStorage['token']`. No cookies, no CSRF.
 - **Codigos de estado con trato especial en el FE**: `errorInterceptor` hace **logout
