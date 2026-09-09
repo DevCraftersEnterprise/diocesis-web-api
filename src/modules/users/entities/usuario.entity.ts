@@ -1,7 +1,17 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, Unique } from 'typeorm';
+import {
+  Check,
+  Column,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+  Unique,
+} from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 
 export type UserRole = 'super' | 'admin' | 'user';
+
+export const USER_ROLES: readonly UserRole[] = ['super', 'admin', 'user'];
 
 /**
  * Mapea `usuarios_usuario` (Django `AbstractBaseUser` + `PermissionsMixin` + `BaseModel`).
@@ -12,7 +22,7 @@ export type UserRole = 'super' | 'admin' | 'user';
  * "Usuario activo" = ambos `true`. Toda (des)activacion toca los dos.
  *
  * Sin `createdBy_id` (el `BaseModel` de Django no lo tiene para usuarios).
- * `role` sin CHECK en BD (ADR-004 DQ2-A lo anade en una migracion de endurecimiento).
+ * `role`: CHECK de dominio en BD (migracion `CheckTypeRoleDomain`, ADR-004 DQ2-A).
  * `is_superuser` / grupos / permisos de Django no se usan (NestJS autoriza por `role`);
  * se mapean solo para fidelidad.
  *
@@ -25,6 +35,7 @@ export type UserRole = 'super' | 'admin' | 'user';
 @Entity('usuarios_usuario')
 @Unique('usuarios_usuario_username_key', ['username'])
 @Unique('usuarios_usuario_email_key', ['email'])
+@Check('usuarios_usuario_role_check', `"role" IN ('super','admin','user')`)
 export class Usuario extends BaseEntity {
   @Column('varchar', { length: 128 })
   password!: string;

@@ -5,9 +5,7 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
-import type { UserRole } from '../entities/usuario.entity';
-
-const ROLES: UserRole[] = ['super', 'admin', 'user'];
+import { USER_ROLES, type UserRole } from '../entities/usuario.entity';
 
 /**
  * `PUT /users/usuarios/{id}/` — parcial. **Sin `password`** (BUG-DJANGO-010: el cambio de
@@ -24,6 +22,6 @@ export class UpdateUserDto {
   email?: string;
 
   @IsOptional()
-  @IsIn(ROLES)
+  @IsIn(USER_ROLES)
   role?: UserRole;
 }

@@ -116,8 +116,12 @@ de su tabla (ver `src/modules/users/entities/usuario.entity.ts` como referencia)
    NestJS (no hay `carrusel/0003` desplegada). Resuelve BUG-DJANGO-023. **Se aplica de
    verdad** (no es no-op) contra prod/oraculo. Aplicada al oraculo en la Tarea 5.1
    (backfill verificado: 21/21).
-3. Pendiente: `NNNN-check-type-role` — DQ2-A (aditiva; `CHECK` en `documentos.type` y
-   `usuarios.role`).
+3. **`1788981168539-CheckTypeRoleDomain`** — DQ2-A (Tarea 8.2). **Aditiva**: `CHECK` de
+   dominio en `documentos_documento.type` (los 9 `DOCUMENT_TYPE_CHOICES`) y en
+   `usuarios_usuario.role` (`super`/`admin`/`user`). Nombres `<tabla>_<col>_check` (estilo
+   Django). Segura: datos actuales cumplen (documentos: 0 filas; usuarios: solo los 3
+   roles). Las entidades declaran `@Check(name, expr)` -> `migration:generate` sigue
+   limpio (solo el ruido `*_like`). Aplicada al oraculo en la Tarea 8.2.
 4. ... deltas que surjan por finding/ADR.
 
 ### FASE 7 (articulos / noticias / documentos): **sin migracion**

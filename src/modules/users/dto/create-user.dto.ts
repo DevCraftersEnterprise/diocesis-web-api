@@ -1,7 +1,5 @@
 import { IsEmail, IsIn, IsNotEmpty, IsString } from 'class-validator';
-import type { UserRole } from '../entities/usuario.entity';
-
-const ROLES: UserRole[] = ['super', 'admin', 'user'];
+import { USER_ROLES, type UserRole } from '../entities/usuario.entity';
 
 /** `POST /users/usuarios/` — `role` REQUERIDO (BUG-DJANGO-009). Sin `is_staff`/`is_active`. */
 export class CreateUserDto {
@@ -12,7 +10,7 @@ export class CreateUserDto {
   @IsEmail()
   email!: string;
 
-  @IsIn(ROLES)
+  @IsIn(USER_ROLES)
   role!: UserRole;
 
   @IsString()
