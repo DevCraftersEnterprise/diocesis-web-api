@@ -29,6 +29,10 @@ delta anotado en **Estado** y justificado en `findings.md`.
     forma por defecto de Nest `{statusCode,message,error}`, que se aplana.
   - Cuerpo de objeto propio del controlador/pipe (`{ "<campo>": [...] }`, `{ "error": ... }`,
     `{ "detail": ... }`) -> se devuelve **tal cual**.
+  - **Validacion de DTO** (`ValidationPipe` global, Tarea 1.5): errores de `class-validator`
+    -> `{ "<campo>": ["mensaje", ...] }` (forma de `serializer.errors` de DRF; anidados con
+    ruta por puntos). `whitelist: true` descarta props desconocidas (mitiga el mass
+    assignment de BUG-DJANGO-007). Los DTO concretos llegan por modulo (Fases 2+).
   - **5xx** -> siempre `{ "detail": "Error interno del servidor." }`; la traza va solo al
     log del servidor (BUG-DJANGO-004). **Delta intencional**: en prod Django devuelve una
     pagina HTML 500; NestJS devuelve este JSON. El FE solo muestra un toast generico.
