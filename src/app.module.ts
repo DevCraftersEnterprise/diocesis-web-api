@@ -7,6 +7,7 @@ import { LoggingModule } from './common/logging/logging.module';
 import { configuration } from './config/configuration';
 import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './health/health.module';
+import { ArticlesModule } from './modules/articles/articles.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CarouselModule } from './modules/carousel/carousel.module';
 import { ParishesModule } from './modules/parishes/parishes.module';
@@ -34,6 +35,7 @@ import { UsersModule } from './modules/users/users.module';
     ReverendsModule,
     CarouselModule,
     ParishesModule,
+    ArticlesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
