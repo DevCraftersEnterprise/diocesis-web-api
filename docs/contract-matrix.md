@@ -141,11 +141,11 @@ delta anotado en **Estado** y justificado en `findings.md`.
 
 | Frontend | Metodo | Endpoint Django (`fe3fc98`) | Request | Response | Endpoint NestJS | Estado |
 |---|---|---|---|---|---|---|
-| `Parish.getParroquiasPaginated()` (admin, `parish-search`) | GET | `/parroquias/` | Query `page`, `page_size`, `name?`, `town?`, `isActive?`. El FE **no** envia `colonia`. | 200 `{count, next, previous, results: Parroquia[]}` (pagina bien). | `/parroquias/` | pendiente. Filtro `colonia` roto (BUG-DJANGO-003), no dispararlo. |
-| `Parish.getParroquiaById()` (`parish-details`) | GET | `/parroquias/{id}/` | — | 200 objeto `Parroquia` (FKs `decanatoId`/`coloniaId`/`padreId` = UUID string). | `/parroquias/{id}/` | pendiente. |
-| `Parish.createParroquia()` / `updateParroquia()` | POST / PUT | `/parroquias/` , `/parroquias/{id}/` | `multipart`: `name, openingDate` (`YYYY-MM-DD`), `address, zipCode, town, coloniaId, decanatoId, padreId`, `picture?`. Bearer + rol. | 201 / 200 objeto `Parroquia` (ignorado). FK inexistente -> 400. | mismas rutas | pendiente. Validar existencia de FKs; `createdBy` mass assignment. |
-| `Parish.activateParroquia()` | POST | `/parroquias/habilitar/{id}/` | `{}`. Bearer + rol. | 200 `{detail}`. | igual | pendiente. |
-| `Parish.deleteParroquia()` | DELETE | `/parroquias/{id}/` | Bearer + rol. | **204 + body** `{detail}`. `isActive=False` + `deletedBy`, sin `deletedAt`. | igual | delta intencional (204 sin body; `deletedAt`). |
+| `Parish.getParroquiasPaginated()` (admin) | GET | `/parroquias/` | Query `page`, `page_size`, `name?`, `town?`, `colonia?`, `isActive?`. | 200 `{count, next, previous, results: Parroquia[]}`. | `/parroquias/` | **hecho (6.1)**. `@Public()`, paginado siempre. Filtro `colonia` -> `colonia.name` via join (**cierra BUG-DJANGO-003**, antes 500 por `coloniaId__nombre`). |
+| `Parish.getParroquiaById()` (`parish-details`) | GET | `/parroquias/{id}/` | — | 200 objeto `Parroquia` (FKs `decanatoId`/`coloniaId`/`padreId` = UUID string). | `/parroquias/{id}/` | **hecho (6.1)**. `@Public()`. Devuelve la fila aunque este soft-deleted (politica canonica). |
+| `Parish.createParroquia()` / `updateParroquia()` | POST / PUT | `/parroquias/` , `/parroquias/{id}/` | `multipart`: `name, openingDate` (`YYYY-MM-DD`), `address, zipCode, town, coloniaId, decanatoId, padreId`, `picture?`. Bearer + rol. | 201 / 200 objeto `Parroquia`. FK inexistente -> 400 `{campo:[...]}`. | mismas rutas | **hecho (6.1)**. `@Roles('admin')`. DTO sin `createdBy` (**BUG-DJANGO-007**); `createdBy`/`updatedBy` desde `@CurrentUser()`. `assertFksExist` valida `decanatoId`/`coloniaId`/`padreId` -> 400. `picture` validada (magic bytes + 5 MB) -> Cloudinary carpeta `parroquia`. PUT sobre fila borrada -> 404. |
+| `Parish.activateParroquia()` | POST | `/parroquias/habilitar/{id}/` | `{}`. Bearer + rol. | 200 `{detail:"Parroquia habilitada correctamente."}`. 404 si ya activa. | igual | **hecho (6.1)**. `@Roles('admin')`. Limpia `deletedAt`/`deletedBy`. |
+| `Parish.deleteParroquia()` | DELETE | `/parroquias/{id}/` | Bearer + rol. | **204 + body** `{detail}`. | igual | **hecho (6.1)**. `@Roles('admin')`. **204 sin cuerpo**; soft-delete fija `deletedAt`+`deletedBy` (**BUG-DJANGO-013**). |
 
 ## Noticias
 

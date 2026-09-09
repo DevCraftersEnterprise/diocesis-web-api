@@ -40,11 +40,17 @@ export default tseslint.config(
     },
   },
   {
-    // En specs los mocks de jest disparan falsos positivos de `unbound-method`
-    // (`expect(mock.metodo).toHaveBeenCalled...`). Se relaja solo para tests.
+    // En specs los mocks de jest son deliberadamente laxos de tipos
+    // (`expect.any()`, `mock.calls[0][1]`, ...). La familia `no-unsafe-*` y
+    // `unbound-method` solo aportan senal en `src/`, no en el andamiaje de tests.
     files: ['**/*.spec.ts', 'test/**/*.ts'],
     rules: {
       '@typescript-eslint/unbound-method': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
     },
   },
 );
