@@ -37,7 +37,7 @@ src/
 ├── modules/
 │   ├── auth/  users/  carousel/  reverends/  decanates/
 │   ├── colonies/  parishes/  news/  articles/  documents/
-└── health/                       # GET /health (fuera de /api)
+└── health/                       # GET /health (fuera de /api; Terminus, ping a la BD)
 ```
 
 Cada modulo: `*.module.ts`, `*.controller.ts` (fino, sin logica), `*.service.ts` (reglas
