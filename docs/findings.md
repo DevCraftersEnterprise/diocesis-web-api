@@ -26,7 +26,9 @@ Actualizado en la FASE 7 (articulos/noticias/documentos): **BUG-DJANGO-011 RESUE
 BUG-DJANGO-004/007/013 y SECURITY-008 pasan a RESUELTO para todos los modulos migrados.
 Actualizado en la FASE 8 (endurecimiento): **SECURITY-006 RESUELTO** (throttler en auth,
 Tarea 8.1); nuevo **SECRET-006** (volcado de fila via `DETAIL` de Postgres, Tarea 8.2);
-**BUG-DJANGO-005 RESUELTO** (lista de contrasenas comunes + politica en la via CSV, Tarea 8.4).
+**BUG-DJANGO-005 RESUELTO** (lista de contrasenas comunes + politica en la via CSV, Tarea 8.4);
+**APIC-002 RESUELTO** (inventario de sobres, Tarea 8.5); argon2id con parametros fijados
+(Tarea 8.3); CHECK de dominio `type`/`role` (Tarea 8.2, ADR-004 DQ2-A).
 
 ---
 
@@ -70,7 +72,7 @@ Tarea 8.1); nuevo **SECRET-006** (volcado de fila via `DETAIL` de Postgres, Tare
 | BUG-DJANGO-022 | BUG | `apps/decanatos/views.py` / `apps/colonias/views.py` GET detail + FE `parish-details.ts` | El detalle filtraba `isActive=True` -> 404 en filas borradas -> rompia `parish-details` (`forkJoin` sin handler). | **RESUELTO (Tareas 3.1/3.2)** para decanatos y colonias: `GET /{id}/` devuelve la fila aunque este soft-deleted (`CatalogService.detail`). Ya no hace falta el handler de error en el frontend para este caso. |
 | BUG-DJANGO-013 | BUG | delete() de casi todos los modulos (prod `fe3fc98`) | Fijan `isActive=False` + `deletedBy` pero **no `deletedAt`** (padres, decanatos, colonias, parroquias, noticias, articulos, documentos). | **RESUELTO** para todos los modulos migrados: politica canonica de soft-delete (FASE 3) `isActive=false` + `deletedAt` + `deletedBy` siempre; `habilitar` limpia `deletedAt`/`deletedBy`; `DELETE` -> 204 sin cuerpo. Aplicado a decanatos/colonias (3.x), padres (4.x), carrusel (5.1), parroquias (6.1), articulos (7.1), noticias (7.2), documentos (7.3) con e2e. |
 | BUG-DJANGO-024 | BUG | `apps/decanatos/views.py` `DecanatoView.get` (prod `fe3fc98`) | `results` traia todas las filas ignorando `page_size` (serializaba el `queryset`, no la `page`). | **RESUELTO (Tarea 3.1)**: `DecanatesService.list` usa `skip/take` + `buildPage` -> `results` respeta `page_size`. Delta documentado en `contract-matrix.md`. |
-| APIC-002 | API CONTRACT | respuestas de varios endpoints | Sobres inconsistentes: usuarios `{mensaje,data}`; resto objeto plano; deletes `{detail}` con 204 + body. | Inventariar por endpoint que lee el FE (Tarea 0.2); unificar 204 sin body como delta intencional. Fase 8.3. |
+| APIC-002 | API CONTRACT | respuestas de varios endpoints | Sobres inconsistentes: usuarios `{mensaje,data}`; resto objeto plano; deletes `{detail}` con 204 + body. | **RESUELTO (Tarea 8.5)**: inventario completo en `contract-matrix.md` ("Sobres de respuesta"). No queda ningun `{mensaje,data}` (usuarios create/update -> objeto plano, delta ya documentado). `DELETE` -> **204 sin cuerpo** en todos los modulos. Los `{mensaje}` que quedan (`cambiar-estado`/`change-password`/`reset-password`/`cargar-por-csv`) son paridad deliberada con Django: el FE los consume. |
 | APIC-003 | API CONTRACT | `apps/padres/views.py` GET vs `decanatos`/`colonias` GET | `/padres/` pagina solo si llega `page`/`page_size` (si no, array plano); `/decanatos/` y `/colonias/` paginan SIEMPRE. | **RESUELTO**: decanatos/colonias paginan siempre (Tareas 3.1/3.2); `/padres/` devuelve **array plano** sin `page`/`page_size` y objeto paginado con ellos (Tarea 4.2, `PadresService.list(query, paginated)`). |
 | APIC-004 | API CONTRACT | manejo de errores global | Formas mezcladas: `{detail}` vs `{error}` vs `{campo:[msgs]}`. El FE `login` lee `err.error.detail`. | **RESUELTO (Tarea 1.4)**: `AllExceptionsFilter` global (`src/common/filters/`, registrado via `APP_FILTER` en `CommonModule`). Escalar -> `{detail}`; objeto propio -> tal cual; 5xx -> `{detail:"Error interno del servidor."}` + log (cubre BUG-DJANGO-004 en NestJS). Contrato en `contract-matrix.md`. |
 | TEST-001 | TESTING | ambos proyectos | Cobertura de tests nula -> sin red de seguridad de referencia. | Arnes de paridad + tests por slice. Fases 0.7 y 2+. |
@@ -106,6 +108,6 @@ Tarea 8.1); nuevo **SECRET-006** (volcado de fila via `DETAIL` de Postgres, Tare
 | R7 | Paginacion estilo DRF (`{count,next,previous,results}`). | Helper de paginacion identico (Fase 1.6). |
 | R8 | Busqueda de `tags` sobre jsonb. | RESUELTO (FASE 7): `applyTagFilter` (QueryBuilder `EXISTS ... jsonb_array_elements_text`, parametrizado) + e2e de paridad en articulos/noticias/documentos. |
 | R9 | Cloudinary: se guarda `secure_url`; en prod carpetas hardcodeadas por vista, sin `secure`/validacion. | Servicio unico con carpetas por entorno; validacion por contenido. |
-| R10 | Inconsistencias de soft-delete (`deletedAt` casi nunca) y 204-con-body. | Congelar comportamiento actual; unificar como delta intencional (Fase 8.3). |
+| R10 | Inconsistencias de soft-delete (`deletedAt` casi nunca) y 204-con-body. | RESUELTO: politica canonica de soft-delete (FASE 3) + 204 sin cuerpo en todos los modulos; inventario de sobres en `contract-matrix.md` (APIC-002, Tarea 8.5). |
 | R11 | CSV de usuarios: en prod funciona (`cargar-por-csv/`); los 3 commits locales sin desplegar lo romperian. | NestJS mantiene `cargar-por-csv/` + alias opcional. |
 | R12 | Host de despliegue distinto a Render. | Fase 9 (solo preparacion). |
