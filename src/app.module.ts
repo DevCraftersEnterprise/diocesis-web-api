@@ -10,6 +10,7 @@ import { HealthModule } from './health/health.module';
 import { ArticlesModule } from './modules/articles/articles.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CarouselModule } from './modules/carousel/carousel.module';
+import { DocumentsModule } from './modules/documents/documents.module';
 import { NewsModule } from './modules/news/news.module';
 import { ParishesModule } from './modules/parishes/parishes.module';
 import { ColoniesModule } from './modules/colonies/colonies.module';
@@ -38,6 +39,7 @@ import { UsersModule } from './modules/users/users.module';
     ParishesModule,
     ArticlesModule,
     NewsModule,
+    DocumentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
