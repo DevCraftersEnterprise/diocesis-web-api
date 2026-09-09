@@ -27,19 +27,19 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import type { Paginated } from '../../common/pagination';
 import { uuidParam } from '../../common/pipes/uuid-param.pipe';
 import type { Usuario } from '../users/entities/usuario.entity';
-import { DecanatesService } from './decanates.service';
+import { ColoniesService } from './colonies.service';
 
-/** `/api/decanatos/`. GET publico; escritura admin/super (guards globales). */
-@Controller('decanatos')
-export class DecanatesController {
-  constructor(private readonly decanates: DecanatesService) {}
+/** `/api/colonias/`. Gemelo de decanatos. GET publico; escritura admin/super. */
+@Controller('colonias')
+export class ColoniesController {
+  constructor(private readonly colonies: ColoniesService) {}
 
   @Get()
   @Public()
   list(
     @Query() query: ListCatalogQueryDto,
   ): Promise<Paginated<CatalogNameResponse>> {
-    return this.decanates.list(query);
+    return this.colonies.list(query);
   }
 
   @Post()
@@ -49,10 +49,9 @@ export class DecanatesController {
     @Body() dto: CreateCatalogNameDto,
     @CurrentUser() me: Usuario,
   ): Promise<CatalogNameResponse> {
-    return this.decanates.create(dto, me);
+    return this.colonies.create(dto, me);
   }
 
-  /** En prod la ruta es `cargar-csv/` (sin "por"), a diferencia de usuarios/padres. */
   @Post('cargar-csv')
   @Roles('admin')
   @HttpCode(HttpStatus.OK)
@@ -66,7 +65,7 @@ export class DecanatesController {
         error: 'No se proporciono un archivo CSV.',
       });
     }
-    return this.decanates.createFromCsv(file.buffer, me);
+    return this.colonies.createFromCsv(file.buffer, me);
   }
 
   @Post('habilitar/:id')
@@ -76,13 +75,13 @@ export class DecanatesController {
     @Param('id', uuidParam()) id: string,
     @CurrentUser() me: Usuario,
   ): Promise<{ detail: string }> {
-    return this.decanates.activate(id, me);
+    return this.colonies.activate(id, me);
   }
 
   @Get(':id')
   @Public()
   detail(@Param('id', uuidParam()) id: string): Promise<CatalogNameResponse> {
-    return this.decanates.detail(id);
+    return this.colonies.detail(id);
   }
 
   @Put(':id')
@@ -92,10 +91,9 @@ export class DecanatesController {
     @Body() dto: UpdateCatalogNameDto,
     @CurrentUser() me: Usuario,
   ): Promise<CatalogNameResponse> {
-    return this.decanates.update(id, dto, me);
+    return this.colonies.update(id, dto, me);
   }
 
-  /** 204 sin cuerpo (Django devuelve 204 + body, HTTP invalido). */
   @Delete(':id')
   @Roles('admin')
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -103,6 +101,6 @@ export class DecanatesController {
     @Param('id', uuidParam()) id: string,
     @CurrentUser() me: Usuario,
   ): Promise<void> {
-    return this.decanates.softDelete(id, me);
+    return this.colonies.softDelete(id, me);
   }
 }

@@ -8,6 +8,7 @@ import { configuration } from './config/configuration';
 import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { ColoniesModule } from './modules/colonies/colonies.module';
 import { DecanatesModule } from './modules/decanates/decanates.module';
 import { UsersModule } from './modules/users/users.module';
 
@@ -26,6 +27,7 @@ import { UsersModule } from './modules/users/users.module';
     AuthModule,
     UsersModule,
     DecanatesModule,
+    ColoniesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
