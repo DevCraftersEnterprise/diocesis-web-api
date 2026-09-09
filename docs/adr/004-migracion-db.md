@@ -76,6 +76,9 @@
    `updatedAt`/`deletedAt`/`updatedBy`/`deletedBy`: es un **delta aditivo no disruptivo**
    (el modelo `Carrusel` del frontend es una interfaz; los campos extra en el JSON se
    ignoran en runtime). Se documenta en `contract-matrix.md`.
+   **Implementado (Tareas 5.1/5.2):** migracion `1788975276733-CarruselBasemodelFields`
+   (nombres de constraint/indice elegidos por NestJS con hex propio, no hay `0003`
+   desplegada que igualar). Aplicada al oraculo; backfill 21/21 verificado.
 
 8. **`django_*` / `auth_*` / `usuarios_usuario_groups` / `usuarios_usuario_user_permissions`:**
    NestJS **no las mapea, no las toca, no las borra.** Permanecen en la BD sin uso. Su
