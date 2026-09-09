@@ -31,5 +31,6 @@ export const configuration = registerAs(CONFIG_NAMESPACE, (): Config => {
       ),
     },
     cors: { origins },
+    log: { level: env.LOG_LEVEL },
   };
 });

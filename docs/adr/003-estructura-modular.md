@@ -25,7 +25,9 @@ src/
 │   ├── decorators/               # @CurrentUser, @Roles, @Public
 │   ├── guards/                   # JwtAuthGuard, RolesGuard
 │   ├── filters/                  # AllExceptionsFilter (formas de error compatibles)
-│   ├── interceptors/             # logging + request-id
+│   ├── pipes/                    # ValidationPipe global (forma DRF { campo: [msgs] })
+│   ├── logging/                  # LoggingModule: pino (JSON, redact auth/cookie/password)
+│   ├── interceptors/             # request-id / transformaciones puntuales
 │   ├── pagination/               # helper estilo DRF ({count,next,previous,results})
 │   └── soft-delete/              # servicio/mixin de borrado logico canonico
 ├── database/
