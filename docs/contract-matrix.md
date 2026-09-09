@@ -50,6 +50,14 @@ delta anotado en **Estado** y justificado en `findings.md`.
 - **Cuerpo de create/update**: el FE **ignora el body** de POST/PUT (toast + recarga).
   Excepciones que SI lo leen: `login` (`access`), `loadProfile` (`User`), `home`
   (`results`), `post-details`, `parish-details`, `reverend-details`.
+- **Soft-delete canonico** (politica FASE 3, `CatalogService`; cierra BUG-DJANGO-012):
+  - `GET /{id}/` **nunca** filtra `isActive` -> devuelve la fila aunque este borrada
+    (cierra BUG-DJANGO-022). `GET /` (lista) sigue filtrando segun el query `isActive`.
+  - `PUT` / `DELETE` exigen fila **activa** -> 404 si esta borrada (hay que `habilitar/`
+    antes). `POST /habilitar/{id}/` exige fila **inactiva** -> 404 si ya esta activa.
+  - `DELETE` (soft) fija **`isActive=false` + `deletedAt` + `deletedBy`** (Django no fijaba
+    `deletedAt` -> BUG-DJANGO-013). `habilitar/` limpia `deletedAt`/`deletedBy`.
+  - Respuesta de `DELETE`: **204 sin cuerpo** (Django devuelve 204 + `{detail}`, invalido).
 - **camelCase** en request y response, **obligatorio**.
 - **Fechas**: `DateField` -> `YYYY-MM-DD`; `DateTimeField` -> ISO 8601 UTC. Formato exacto
   -> pendiente runtime.
