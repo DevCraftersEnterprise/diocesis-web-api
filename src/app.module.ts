@@ -8,6 +8,7 @@ import { configuration } from './config/configuration';
 import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { CarouselModule } from './modules/carousel/carousel.module';
 import { ColoniesModule } from './modules/colonies/colonies.module';
 import { DecanatesModule } from './modules/decanates/decanates.module';
 import { ReverendsModule } from './modules/reverends/reverends.module';
@@ -30,6 +31,7 @@ import { UsersModule } from './modules/users/users.module';
     DecanatesModule,
     ColoniesModule,
     ReverendsModule,
+    CarouselModule,
   ],
   controllers: [AppController],
   providers: [AppService],
