@@ -23,6 +23,16 @@ describe('AppController (e2e)', () => {
       .expect('Hello World!');
   });
 
+  it('ruta inexistente -> 404 JSON con { detail } (AllExceptionsFilter)', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/ruta-que-no-existe')
+      .expect(404)
+      .expect('Content-Type', /json/);
+
+    expect(typeof (res.body as { detail?: unknown }).detail).toBe('string');
+    expect(res.body).not.toHaveProperty('statusCode');
+  });
+
   afterEach(async () => {
     await app.close();
   });

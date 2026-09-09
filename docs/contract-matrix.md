@@ -24,6 +24,14 @@ delta anotado en **Estado** y justificado en `findings.md`.
   - Permiso denegado -> **403**.
   - Validacion -> **400** (`{ "<campo>": ["..."] }` o `{"error": "..."}`); **nunca** 401/403.
   - No encontrado -> **404**.
+- **Forma del cuerpo de error** (`AllExceptionsFilter`, Tarea 1.4, resuelve APIC-004):
+  - Mensaje escalar -> `{ "detail": "<mensaje>" }` (lo que lee `login.ts`). Aplica a la
+    forma por defecto de Nest `{statusCode,message,error}`, que se aplana.
+  - Cuerpo de objeto propio del controlador/pipe (`{ "<campo>": [...] }`, `{ "error": ... }`,
+    `{ "detail": ... }`) -> se devuelve **tal cual**.
+  - **5xx** -> siempre `{ "detail": "Error interno del servidor." }`; la traza va solo al
+    log del servidor (BUG-DJANGO-004). **Delta intencional**: en prod Django devuelve una
+    pagina HTML 500; NestJS devuelve este JSON. El FE solo muestra un toast generico.
 - **Paginacion**: el FE lee **`results`** y **`count`**. No lee `next`/`previous`. -> en
   NestJS pueden ser `null`/relativos (delta permitido). El FE envia `page` + `page_size`
   (`page = offset/limit + 1`).
