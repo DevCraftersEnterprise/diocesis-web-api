@@ -105,9 +105,17 @@ foreignKeyConstraintName })` + `@Index(<nombre>)` usando los nombres **exactos d
 de su tabla (ver `src/modules/users/entities/usuario.entity.ts` como referencia). Con eso
 `migration:generate` solo deja el ruido `*_like` de arriba.
 
-## Orden previsto de migraciones (ADR-004)
+## Migraciones (ADR-004)
 
-1. `0001-baseline` — esquema actual de prod.
-2. `0002-carrusel-basemodel-fields` — DQ3-B (aditiva; backfill de 21 filas; resuelve BUG-DJANGO-023).
-3. `NNNN-check-type-role` — DQ2-A (aditiva; `CHECK` en `documentos.type` y `usuarios.role`).
+1. `1788804486651-BaselineProductionSchema` — esquema actual de prod. No-op salvo BD vacia
+   (ver arriba). Marcada como aplicada en oraculo/prod.
+2. **`1788975276733-CarruselBasemodelFields`** — DQ3-B (Tarea 5.1). **Aditiva**: anade a
+   `carrusel_carrusel` las columnas `updatedAt` (NOT NULL, backfill desde `createdAt` en
+   las 21 filas), `deletedAt` (NULL), `updatedBy_id`/`deletedBy_id` (uuid NULL) + FK
+   `DEFERRABLE INITIALLY DEFERRED` + indices. Nombres de constraint/indice elegidos por
+   NestJS (no hay `carrusel/0003` desplegada). Resuelve BUG-DJANGO-023. **Se aplica de
+   verdad** (no es no-op) contra prod/oraculo. Aplicada al oraculo en la Tarea 5.1
+   (backfill verificado: 21/21).
+3. Pendiente: `NNNN-check-type-role` — DQ2-A (aditiva; `CHECK` en `documentos.type` y
+   `usuarios.role`).
 4. ... deltas que surjan por finding/ADR.
