@@ -1,3 +1,4 @@
+import * as argon2 from 'argon2';
 import { PasswordService } from './password.service';
 
 /**
@@ -56,6 +57,26 @@ describe('PasswordService', () => {
 
       const bad = await service.verify('mal', hash);
       expect(bad).toEqual({ valid: false, needsRehash: false });
+    });
+
+    it('hash() fija parametros explicitos (m=65536, t=3, p=4)', async () => {
+      const hash = await service.hash('x');
+      // formato PHC de argon2: `$argon2id$v=19$m=<mem>,p=<par>,t=<time>$<salt>$<hash>`
+      expect(hash).toContain('$m=65536,p=4,t=3$');
+    });
+
+    it('verify() pide rehash si el hash argon2id es mas debil que la config', async () => {
+      const weak = await argon2.hash('vieja', {
+        type: argon2.argon2id,
+        memoryCost: 19_456,
+        timeCost: 2,
+        parallelism: 1,
+      });
+      const res = await service.verify('vieja', weak);
+      expect(res).toEqual({ valid: true, needsRehash: true });
+
+      const wrong = await service.verify('otra', weak);
+      expect(wrong).toEqual({ valid: false, needsRehash: false });
     });
 
     it('cada hash usa una sal distinta', async () => {
