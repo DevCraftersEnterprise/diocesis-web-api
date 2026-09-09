@@ -117,12 +117,12 @@ delta anotado en **Estado** y justificado en `findings.md`.
 
 | Frontend | Metodo | Endpoint Django (`fe3fc98`) | Endpoint NestJS | Estado |
 |---|---|---|---|---|
-| `Colony.getColoniasPaginated()` (admin) | GET | `/colonias/` (pagina bien) | `/colonias/` | pendiente. |
-| `Colony.getAllColonias()` (`parishes.ts`) | GET | `/colonias/` (query `isActive=true`, sin `page` -> objeto paginado) | `/colonias/` | pendiente. |
-| `Colony.getColoniaById()` (`parish-details`) | GET | `/colonias/{id}/` (404 si soft-deleted, BUG-DJANGO-022) | `/colonias/{id}/` | pendiente. |
-| `Colony.createColonia()` / `updateColonia()` | POST / PUT | `/colonias/` , `/colonias/{id}/` (JSON `{name}`) | mismas | pendiente. |
-| `Colony.activateColonia()` | POST | `/colonias/habilitar/{id}/` | igual | pendiente. |
-| `Colony.deleteColonia()` | DELETE | `/colonias/{id}/` (204+body, sin `deletedAt`) | igual | delta intencional (204 sin body; `deletedAt`). |
+| `Colony.getColoniasPaginated()` (admin) | GET | `/colonias/` (pagina bien) | `/colonias/` | **hecho (3.2)**. `@Public()`, `CatalogService` compartido. |
+| `Colony.getAllColonias()` (`parishes.ts`) | GET | `/colonias/` (query `isActive=true`, sin `page` -> objeto paginado) | `/colonias/` | **hecho (3.2)**. Sin `page` sigue devolviendo objeto paginado. |
+| `Colony.getColoniaById()` (`parish-details`) | GET | `/colonias/{id}/` | `/colonias/{id}/` | **hecho (3.2)**. `@Public()`. Devuelve la fila aunque este soft-deleted (cierra BUG-DJANGO-022). |
+| `Colony.createColonia()` / `updateColonia()` | POST / PUT | `/colonias/` , `/colonias/{id}/` (JSON `{name}`) | mismas | **hecho (3.2)**. `@Roles('admin')`. `createdBy`/`updatedBy` desde `@CurrentUser()` (BUG-DJANGO-007). Objeto `Colonia` plano. |
+| `Colony.activateColonia()` | POST | `/colonias/habilitar/{id}/` | igual | **hecho (3.2)**. `@Roles('admin')`. 200 `{detail:"Colonia habilitado correctamente."}` (texto exacto de Django). |
+| `Colony.deleteColonia()` | DELETE | `/colonias/{id}/` | igual | **hecho (3.2)**. `@Roles('admin')`. **204 sin cuerpo**; soft-delete fija `deletedAt`+`deletedBy` (BUG-DJANGO-013). |
 
 ## Parroquias
 
