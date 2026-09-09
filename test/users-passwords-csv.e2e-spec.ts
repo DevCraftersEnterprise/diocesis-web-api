@@ -102,10 +102,13 @@ describe('Users passwords + CSV (e2e)', () => {
   it('POST /cargar-por-csv/ -> 200 { mensaje, creados, errores }', async () => {
     const uname = `e2e_csv_${randomUUID().slice(0, 8)}`;
     createdUsernames.push(uname);
+    const weakName = `e2e_csv_weak_${randomUUID().slice(0, 6)}`;
     const csv = [
       'username,email,role,password',
       `${uname},${uname}@x.test,user,clave-csv-larga`,
       'incompleta,,user,x',
+      // password = username -> politica de contrasenas lo rechaza (BUG-DJANGO-005, 8.4)
+      `${weakName},${weakName}@x.test,user,${weakName}`,
     ].join('\n');
 
     const res = await request(app.getHttpServer())
@@ -120,7 +123,10 @@ describe('Users passwords + CSV (e2e)', () => {
       mensaje: string;
     };
     expect(body.creados).toContain(uname);
-    expect(body.errores).toHaveLength(1);
+    expect(body.errores).toHaveLength(2);
+    expect(body.errores.some((e) => e.includes('Contrasena invalida'))).toBe(
+      true,
+    );
   });
 
   it('POST /cargar-por-csv/ sin archivo -> 400 { error }', () =>
