@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CommonModule } from './common/common.module';
 import { LoggingModule } from './common/logging/logging.module';
+import type { Config } from './config/config.types';
 import { configuration } from './config/configuration';
 import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './health/health.module';
@@ -25,6 +27,29 @@ import { UsersModule } from './modules/users/users.module';
       cache: true,
       envFilePath: [`.env.${process.env.NODE_ENV ?? 'development'}`, '.env'],
       load: [configuration],
+    }),
+    // SECURITY-006: rate limiting SOLO en los endpoints sensibles de auth
+    // (login / change-password / reset-password), que lo activan con
+    // `@UseGuards(ThrottlerGuard)`. No hay `APP_GUARD` global -> el resto de la API
+    // no cambia de comportamiento.
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => {
+        const throttle = config.getOrThrow<Config['throttle']>(
+          'app-config.throttle',
+        );
+        return {
+          throttlers: [
+            {
+              name: 'auth',
+              limit: throttle.authLimit,
+              ttl: throttle.authTtlMs,
+            },
+          ],
+          errorMessage:
+            'Demasiados intentos. Intentalo de nuevo en un momento.',
+        };
+      },
     }),
     LoggingModule,
     DatabaseModule,

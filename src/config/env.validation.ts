@@ -25,6 +25,10 @@ function toPort(value: unknown): number {
   return value === undefined || value === '' ? 3000 : Number(value);
 }
 
+function toIntOr(value: unknown, fallback: number): number {
+  return value === undefined || value === '' ? fallback : Number(value);
+}
+
 /** Forma cruda de `process.env` (todo strings) con validacion. */
 export class EnvSchema {
   @IsOptional()
@@ -85,6 +89,19 @@ export class EnvSchema {
     message: `LOG_LEVEL debe ser uno de: ${LOG_LEVELS.join(', ')}`,
   })
   LOG_LEVEL: LogLevel = 'info';
+
+  /** Rate limit de los endpoints sensibles de auth (SECURITY-006). Django no tiene ninguno. */
+  @IsOptional()
+  @Transform((params) => toIntOr(params.value, 10))
+  @IsInt()
+  @Min(1)
+  THROTTLE_AUTH_LIMIT = 10;
+
+  @IsOptional()
+  @Transform((params) => toIntOr(params.value, 60_000))
+  @IsInt()
+  @Min(1000)
+  THROTTLE_AUTH_TTL_MS = 60_000;
 }
 
 export function validateEnv(raw: NodeJS.ProcessEnv): EnvSchema {

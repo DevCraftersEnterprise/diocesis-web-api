@@ -12,9 +12,11 @@ import {
   Put,
   Query,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import { roleAtLeast } from '../../common/auth/roles';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -73,9 +75,10 @@ export class UsersController {
     return this.users.createFromCsv(file.buffer, me);
   }
 
-  /** Cambiar la propia contrasena. Exige `current_password` (endurecido). */
+  /** Cambiar la propia contrasena. Exige `current_password` (endurecido). Rate-limited (SECURITY-006). */
   @Put('change-password')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(ThrottlerGuard)
   changePassword(
     @Body() dto: ChangePasswordDto,
     @CurrentUser() me: Usuario,
@@ -87,10 +90,11 @@ export class UsersController {
     );
   }
 
-  /** Resetear la contrasena de otro usuario (admin/super). Devuelve la nueva. */
+  /** Resetear la contrasena de otro usuario (admin/super). Devuelve la nueva. Rate-limited (SECURITY-006). */
   @Post('reset-password/:id')
   @Roles('admin')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(ThrottlerGuard)
   resetPassword(
     @Param('id', uuidParam()) id: string,
     @CurrentUser() me: Usuario,
