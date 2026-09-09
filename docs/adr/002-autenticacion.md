@@ -54,6 +54,12 @@ defecto salvo lifetimes):
    - En el **primer login correcto** de cada usuario, la contrasena se **re-hashea con
      `argon2id`** y se persiste. Usuarios nuevos y cambios/reseteos de contrasena ya usan
      `argon2id`.
+   - **Parametros argon2id fijados explicitamente (Tarea 8.3):** `memoryCost=65536` (64 MiB),
+     `timeCost=3`, `parallelism=4` — por encima del minimo OWASP y coincidiendo con el
+     default de `argon2@0.45` (no se depende de ese default). `verify()` marca
+     `needsRehash` tambien para un hash argon2id con parametros por debajo de estos, de
+     modo que subirlos en el futuro dispara el re-hash en el siguiente login (mismo
+     mecanismo que para PBKDF2).
    - Requiere que Django quede **retirado o en solo lectura** en el corte (sin escritura
      concurrente sobre `usuarios_usuario.password`). Encaja con D1-A.
    - Dependencia nueva justificada: `argon2` (hashing de contrasenas; estandar recomendado
