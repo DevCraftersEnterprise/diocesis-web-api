@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -10,18 +11,22 @@ import {
   Post,
   Put,
   Query,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { roleAtLeast } from '../../common/auth/roles';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import type { Paginated } from '../../common/pagination';
 import { uuidParam } from '../../common/pipes/uuid-param.pipe';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ListUsersQueryDto } from './dto/list-users.query';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Usuario } from './entities/usuario.entity';
 import type { UserResponse } from './user.response';
-import { UsersService } from './users.service';
+import { type CsvImportResult, UsersService } from './users.service';
 
 const FORBIDDEN = { detail: 'No tienes permiso para realizar esta accion.' };
 
@@ -49,6 +54,48 @@ export class UsersController {
     @CurrentUser() me: Usuario,
   ): Promise<UserResponse> {
     return this.users.create(dto, me);
+  }
+
+  /** Alta masiva por CSV (admin/super). Campo multipart `archivo_csv`. */
+  @Post('cargar-por-csv')
+  @Roles('admin')
+  @HttpCode(HttpStatus.OK)
+  @UseInterceptors(FileInterceptor('archivo_csv'))
+  loadCsv(
+    @UploadedFile() file: Express.Multer.File | undefined,
+    @CurrentUser() me: Usuario,
+  ): Promise<CsvImportResult> {
+    if (!file) {
+      throw new BadRequestException({
+        error: 'No se proporciono un archivo CSV.',
+      });
+    }
+    return this.users.createFromCsv(file.buffer, me);
+  }
+
+  /** Cambiar la propia contrasena. Exige `current_password` (endurecido). */
+  @Put('change-password')
+  @HttpCode(HttpStatus.OK)
+  changePassword(
+    @Body() dto: ChangePasswordDto,
+    @CurrentUser() me: Usuario,
+  ): Promise<{ mensaje: string }> {
+    return this.users.changePassword(
+      me,
+      dto.current_password,
+      dto.new_password,
+    );
+  }
+
+  /** Resetear la contrasena de otro usuario (admin/super). Devuelve la nueva. */
+  @Post('reset-password/:id')
+  @Roles('admin')
+  @HttpCode(HttpStatus.OK)
+  resetPassword(
+    @Param('id', uuidParam()) id: string,
+    @CurrentUser() me: Usuario,
+  ): Promise<{ mensaje: string; password: string }> {
+    return this.users.resetPassword(id, me);
   }
 
   /** Perfil propio del usuario autenticado. */

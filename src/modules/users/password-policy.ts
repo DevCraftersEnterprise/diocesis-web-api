@@ -1,4 +1,19 @@
+import { randomBytes } from 'node:crypto';
 import { BadRequestException } from '@nestjs/common';
+
+// Sin caracteres ambiguos (I/l/1/O/0) para que un admin pueda dictarla.
+const GEN_ALPHABET =
+  'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+
+/** Contrasena aleatoria para `reset-password` (BUG-DJANGO-002: ya no es el username). */
+export function generatePassword(length = 16): string {
+  const bytes = randomBytes(length);
+  let out = '';
+  for (let i = 0; i < length; i++) {
+    out += GEN_ALPHABET[bytes[i] % GEN_ALPHABET.length];
+  }
+  return out;
+}
 
 export interface PasswordContext {
   username?: string;
