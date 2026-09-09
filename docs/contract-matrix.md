@@ -106,12 +106,12 @@ delta anotado en **Estado** y justificado en `findings.md`.
 
 | Frontend | Metodo | Endpoint Django (`fe3fc98`) | Request | Response | Endpoint NestJS | Estado |
 |---|---|---|---|---|---|---|
-| `Decant.getDecanatosPaginated()` (admin) | GET | `/decanatos/` | Query `page`, `page_size`, `name?`, `isActive?`. | 200 `{count, next, previous, results: Decanato[]}` **pero `results` trae TODAS las filas** (BUG-DJANGO-024): serializa el `queryset`, no la `page`. | `/decanatos/` | delta intencional: NestJS pagina bien (`results` respeta `page_size`). Con 9 filas el FE no lo nota. |
-| `Decant.getAllDecanatos()` (`parishes.ts`) | GET | `/decanatos/` | Query `isActive=true` (sin `page`). | 200 objeto paginado; `results` = todas (por BUG-DJANGO-024). El FE lee `res.results`/`res.count`. | `/decanatos/` | pendiente. **Asimetria con `/padres/`** (APIC-003). |
-| `Decant.getDecanatoById()` (`parish-details`) | GET | `/decanatos/{id}/` | — | 200 objeto `Decanato`. `isActive=True` requerido -> **404 si soft-deleted** (BUG-DJANGO-022). | `/decanatos/{id}/` | pendiente. |
-| `Decant.createDecanato()` / `updateDecanato()` | POST / PUT | `/decanatos/` , `/decanatos/{id}/` | JSON `{name}`. Bearer + rol. | 201 / 200 objeto `Decanato` (ignorado). Invalido -> 400. | mismas rutas | pendiente. `createdBy` mass assignment (BUG-DJANGO-007). |
-| `Decant.activateDecanato()` | POST | `/decanatos/habilitar/{id}/` | `{}`. Bearer + rol. | 200 `{detail}`. | igual | pendiente. |
-| `Decant.deleteDecanato()` | DELETE | `/decanatos/{id}/` | Bearer + rol. | **204 + body** `{detail}`. `isActive=False` + `deletedBy`, sin `deletedAt` (BUG-DJANGO-013). | igual | delta intencional (204 sin body; `deletedAt` siempre). |
+| `Decant.getDecanatosPaginated()` (admin) | GET | `/decanatos/` | Query `page`, `page_size`, `name?`, `isActive?`. | 200 `{count, next, previous, results: Decanato[]}` **pero `results` trae TODAS las filas** (BUG-DJANGO-024): serializa el `queryset`, no la `page`. | `/decanatos/` | **hecho (3.1)**. `@Public()`. NestJS pagina bien (`results` respeta `page_size`) -> delta vs BUG-DJANGO-024; con 9 filas el FE no lo nota. Filtro `isActive` solo con valor exacto `true`/`false`. |
+| `Decant.getAllDecanatos()` (`parishes.ts`) | GET | `/decanatos/` | Query `isActive=true` (sin `page`). | 200 objeto paginado; `results` = todas (por BUG-DJANGO-024). El FE lee `res.results`/`res.count`. | `/decanatos/` | **hecho (3.1)**. Sin `page` sigue devolviendo objeto paginado (asimetria con `/padres/` preservada, APIC-003). |
+| `Decant.getDecanatoById()` (`parish-details`) | GET | `/decanatos/{id}/` | — | 200 objeto `Decanato`. `isActive=True` requerido -> **404 si soft-deleted** (BUG-DJANGO-022). | `/decanatos/{id}/` | **hecho (3.1)**. `@Public()`. **Devuelve la fila aunque este soft-deleted** (cierra BUG-DJANGO-022; delta canonico de soft-delete). |
+| `Decant.createDecanato()` / `updateDecanato()` | POST / PUT | `/decanatos/` , `/decanatos/{id}/` | JSON `{name}`. Bearer + rol. | 201 / 200 objeto `Decanato`. | mismas rutas | **hecho (3.1)**. `@Roles('admin')`. DTO solo `{name}`; `createdBy`/`updatedBy` desde `@CurrentUser()` (cierra BUG-DJANGO-007). PUT sobre fila borrada -> 404. |
+| `Decant.activateDecanato()` | POST | `/decanatos/habilitar/{id}/` | `{}`. Bearer + rol. | 200 `{detail}`. | igual | **hecho (3.1)**. `@Roles('admin')`. 404 si ya activa. Limpia `deletedAt`/`deletedBy` al reactivar. |
+| `Decant.deleteDecanato()` | DELETE | `/decanatos/{id}/` | Bearer + rol. | **204 + body** `{detail}`. | igual | **hecho (3.1)**. `@Roles('admin')`. **204 sin cuerpo**; soft-delete fija `isActive=false` + `deletedAt` + `deletedBy` (cierra BUG-DJANGO-013). |
 
 ## Colonias (como Decanatos, sin BUG-DJANGO-024)
 
