@@ -7,6 +7,9 @@ de respuestas reales (byte a byte contra el oraculo) es la Tarea 0.7.
 Progreso: FASES 2-6 hechas (usuarios, catalogos, padres, carrusel, parroquias).
 **FASE 7 hecha** (articulos 7.1, noticias 7.2, documentos 7.3): los 3 modulos de
 contenido con `tags jsonb`; cierra BUG-DJANGO-011 (filtro `tags` parametrizado).
+**FASE 8 hecha** (endurecimiento): rate limiting en auth (8.1, SECURITY-006), CHECK de
+dominio `type`/`role` (8.2), parametros argon2id explicitos (8.3), lista de contrasenas
+comunes + politica en CSV (8.4, BUG-DJANGO-005), inventario de sobres (8.5, APIC-002).
 
 Solo se listan los endpoints que el frontend consume hoy (catalogo completo en
 `endpoints-inventory.md`). Cada fila es un contrato que NestJS debe respetar salvo el
@@ -44,6 +47,11 @@ delta anotado en **Estado** y justificado en `findings.md`.
   - **5xx** -> siempre `{ "detail": "Error interno del servidor." }`; la traza va solo al
     log del servidor (BUG-DJANGO-004). **Delta intencional**: en prod Django devuelve una
     pagina HTML 500; NestJS devuelve este JSON. El FE solo muestra un toast generico.
+  - **429** (rate limiting de auth, FASE 8.1, SECURITY-006) -> `{ "detail": "Demasiados
+    intentos. Intentalo de nuevo en un momento." }`. **Delta intencional**: Django no
+    tiene rate limiting. Solo en `POST /token/login/`, `PUT .../change-password/`,
+    `POST .../reset-password/{id}/`. El interceptor del FE no trata el 429 (no es 401/403);
+    lo maneja el componente (toast generico).
 - **Paginacion**: el FE lee **`results`** y **`count`**. No lee `next`/`previous`. -> en
   NestJS pueden ser `null`/relativos (delta permitido). El FE envia `page` + `page_size`
   (`page = offset/limit + 1`). Helper en `src/common/pagination/` (Tarea 1.6):
@@ -76,13 +84,36 @@ delta anotado en **Estado** y justificado en `findings.md`.
   `<= 5 MB` (SECURITY-008) -> 400 `{ "<campo>": [...] }`. Fallo de subida -> 5xx generico,
   nunca `str(e)` (BUG-DJANGO-004). Guarda la `secure_url` como string (igual que Django).
 
+### Sobres de respuesta — inventario final (APIC-002, cerrado en 8.5)
+
+Django mezclaba: usuarios `{mensaje, data}`, el resto objeto plano, y `DELETE` con
+`{detail}` + 204. Inventario tras la migracion (el FE solo lee el body donde se indica
+en el bullet "Cuerpo de create/update"):
+
+| Tipo de endpoint | Sobre NestJS | Paridad Django | Nota |
+|---|---|---|---|
+| GET detalle / POST / PUT de entidad | **objeto plano** (forma del serializer) | usuarios era `{mensaje,data}` -> **delta**; el resto ya era plano | el FE ignora el body de POST/PUT salvo las excepciones ya listadas |
+| GET lista paginada | `{count, next, previous, results}` (`next`/`previous` = `null`) | si | el FE solo lee `count`/`results` |
+| GET lista de `/padres/` sin `page` | **array plano** | si | APIC-003, delta prohibido de tocar |
+| `POST\|PUT .../habilitar/{id}/` | `{ detail: "<Recurso> habilitado correctamente." }` | si (`{detail}`) | texto exacto de Django por recurso |
+| `DELETE` (todos los modulos) | **204 sin cuerpo** | Django: 204 + `{detail}` | **delta intencional** (204 no lleva body) |
+| usuarios `cambiar-estado` / `change-password` | `{ mensaje }` | si | el FE lee `res.mensaje` (toast) |
+| usuarios `reset-password/{id}` | `{ mensaje, password }` | Django: `{mensaje}` | `password` anadido (BUG-DJANGO-002) |
+| usuarios `cargar-por-csv` | `{ mensaje, creados, errores }` | si | — |
+| Errores | `{ detail }` / `{ "<campo>": [...] }` / `{ error }` / 429 `{ detail }` | APIC-004 (filtro global) | ver "Forma del cuerpo de error" arriba |
+
+No queda ningun `{mensaje, data}`. **APIC-002 RESUELTO**: los `{mensaje}` que quedan son
+paridad deliberada con Django (el FE los consume); el unico cambio de forma es el de
+usuarios create/update (objeto plano) y el `204` sin cuerpo, ambos ya documentados como
+delta.
+
 ---
 
 ## Autenticacion
 
 | Frontend | Metodo | Endpoint Django (`fe3fc98`) | Request | Response | Endpoint NestJS | Estado |
 |---|---|---|---|---|---|---|
-| `Auth.login()` (`login.ts`) | POST | `/token/login/` | JSON `{username, password}`. Sin auth. | 200 `{access, refresh}`. Invalidas -> 401 `{detail:"No active account found with the given credentials"}`. | `/token/login/` | **hecho (2.5)**. HS256/`JWT_SECRET` nuevo (corte duro, ADR-002). Payload `{user_id,token_type,jti,iat,exp}`. Verifica PBKDF2 Django y re-hashea a argon2id en el 1er login. Falta body -> 400 `{campo:[...]}`. |
+| `Auth.login()` (`login.ts`) | POST | `/token/login/` | JSON `{username, password}`. Sin auth. | 200 `{access, refresh}`. Invalidas -> 401 `{detail:"No active account found with the given credentials"}`. | `/token/login/` | **hecho (2.5; 8.1)**. HS256/`JWT_SECRET` nuevo (corte duro, ADR-002). Payload `{user_id,token_type,jti,iat,exp}`. Verifica PBKDF2 Django y re-hashea a argon2id en el 1er login (parametros argon2id fijados, 8.3). Falta body -> 400 `{campo:[...]}`. **Rate limit (8.1, SECURITY-006)**: `THROTTLE_AUTH_LIMIT` (10) por `THROTTLE_AUTH_TTL_MS` (60s) e IP -> exceso 429 `{detail}`. |
 | `Auth.loadProfile()` (`layout.ts` admin) | GET | `/users/usuarios/{id}/` | `id` = `user_id` del JWT. Bearer. | 200 objeto `User`. | `/users/usuarios/{id}/` | pendiente (2.7) |
 
 `/token/refresh/` no se usa. NestJS lo implementa igual (`{refresh}` -> 200 `{access}`, sin rotacion ni blacklist) por ser endpoint del contrato (2.5).
@@ -96,9 +127,9 @@ delta anotado en **Estado** y justificado en `findings.md`.
 | `Users.updateUser()` | PUT | `/users/usuarios/{id}/` | JSON `{username, email, role}` (sin password). | 200 `{mensaje, data: User}` (FE ignora body). | `/users/usuarios/{id}/` | **hecho (2.9)**. `@Roles('admin')` + `admin`≠actúa sobre `super` (BUG-DJANGO-021). DTO sin `password` (BUG-DJANGO-010). **Delta**: respuesta = `User` plano 200. |
 | `Users.changeUserStatus()` | PUT | `/users/usuarios/cambiar-estado/{id}/` | Body `{}`. | 200 `{mensaje}`. Toggle `isActive`+`is_active`. | igual | **hecho (2.9)**. `@Roles('admin')`. Togglea **ambos** flags + `deletedAt`/`deletedBy` (BUG-DJANGO-020). Mantiene `{mensaje}` exacto de Django. |
 | `Users` DELETE (`— sin uso` FE) | DELETE | `/users/usuarios/{id}/` | Bearer. | 200 `{mensaje}` (Django). | igual | **hecho (2.9)**. `@Roles('admin')` + gate super. Soft-delete con **ambos** flags a `false` (BUG-DJANGO-020) + `deletedAt`/`deletedBy`. **Delta**: 204 sin cuerpo. |
-| `Users.createUsersByCsv()` | POST | **`/users/usuarios/cargar-por-csv/`** | `multipart` campo `archivo_csv` (`text/csv`). | 200 `{mensaje, creados[], errores[]}`. **Coincide -> funciona.** | `/users/usuarios/cargar-por-csv/` | **hecho (2.10)**. `@Roles('admin')`. Cabeceras `username,email,role[,password]`; sin `password` -> usa `username` (como Django). Sin archivo -> 400 `{error}`. NO aplica politica de contrasenas (igual que Django). |
-| `Users` change-password (`— sin uso` FE) | PUT | `/users/usuarios/change-password/` | `{new_password}` (Django). | 200 `{mensaje}`. | igual | **hecho (2.11, ENDURECIDO)**. Body ahora `{current_password, new_password}`; verifica la actual + politica de contrasenas (BUG-DJANGO-005). Actual incorrecta -> 400 `{current_password:[...]}`. |
-| `Users` reset-password (`— sin uso` FE) | POST | `/users/usuarios/reset-password/{id}/` | Bearer + rol. | 200 `{mensaje}`; password = username (BUG-DJANGO-002). | igual | **hecho (2.11)**. `@Roles('admin')` + gate super. Genera contrasena **aleatoria** (16 chars) y la devuelve: 200 `{mensaje, password}`. Cierra BUG-DJANGO-002. |
+| `Users.createUsersByCsv()` | POST | **`/users/usuarios/cargar-por-csv/`** | `multipart` campo `archivo_csv` (`text/csv`). | 200 `{mensaje, creados[], errores[]}`. **Coincide -> funciona.** | `/users/usuarios/cargar-por-csv/` | **hecho (2.10; 8.4)**. `@Roles('admin')`. Cabeceras `username,email,role[,password]`; sin `password` -> usa `username`. Sin archivo -> 400 `{error}`. **8.4**: aplica `assertPasswordPolicy` por fila (delta vs Django, que no valida) -> `password=username` o comun -> esa fila va a `errores`, no aborta. |
+| `Users` change-password (`— sin uso` FE) | PUT | `/users/usuarios/change-password/` | `{new_password}` (Django). | 200 `{mensaje}`. | igual | **hecho (2.11, ENDURECIDO; 8.1/8.4)**. Body ahora `{current_password, new_password}`; verifica la actual + politica de contrasenas (BUG-DJANGO-005, incluye lista de comunes en 8.4). Actual incorrecta -> 400 `{current_password:[...]}`. **Rate limit (8.1)** -> exceso 429 `{detail}`. |
+| `Users` reset-password (`— sin uso` FE) | POST | `/users/usuarios/reset-password/{id}/` | Bearer + rol. | 200 `{mensaje}`; password = username (BUG-DJANGO-002). | igual | **hecho (2.11; 8.1)**. `@Roles('admin')` + gate super. Genera contrasena **aleatoria** (16 chars) y la devuelve: 200 `{mensaje, password}`. Cierra BUG-DJANGO-002. **Rate limit (8.1)** -> exceso 429 `{detail}`. |
 
 ## Carrusel
 
@@ -197,6 +228,9 @@ delta anotado en **Estado** y justificado en `findings.md`.
 | `tags` invalido (no lista de strings / JSON roto) -> 400 `{tags:[...]}` | articulos, noticias, documentos POST/PUT | `parseTags` endurece: Django aceptaba una lista con no-strings sin chistar. El FE siempre envia `string[]` / string-JSON valido. |
 | Validacion de archivo por magic bytes -> 400 `{campo:[...]}` | noticias `picture`, documentos `document` | SECURITY-008. Django (prod) no validaba nada. El FE solo sube formatos permitidos. |
 | Filtro `?tags=` = `EXISTS(... jsonb_array_elements_text ...)` parametrizado | articulos, noticias, documentos GET | Sustituye `.extra()` deprecado (BUG-DJANGO-011). Mismo resultado observable. |
+| **429** `{detail}` por rate limiting | `POST /token/login/`, `PUT .../change-password/`, `POST .../reset-password/{id}/` | SECURITY-006 (8.1). Django no limita. 10/60s/IP por defecto (`THROTTLE_AUTH_*`). |
+| Politica de contrasenas en el alta por CSV | `POST /users/usuarios/cargar-por-csv/` | BUG-DJANGO-005 (8.4). Django no valida en esa via; NestSi -> fila invalida a `errores`. |
+| `CHECK` de dominio en BD (`documentos.type`, `usuarios.role`) | — (nivel BD, no observable) | ADR-004 DQ2-A (8.2). Defensa en profundidad; la app ya valida con `@IsIn`. |
 
 ## Restricciones que NO se pueden cambiar (deltas prohibidos)
 
