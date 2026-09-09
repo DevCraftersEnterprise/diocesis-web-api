@@ -4,6 +4,10 @@ Estado: **v2 (Tarea 0.6)**. Anclada a **`fe3fc98`** = produccion real. La v1 (0.
 construyo leyendo el `main` local, 3 commits por delante y NO desplegado. La verificacion
 de respuestas reales (byte a byte contra el oraculo) es la Tarea 0.7.
 
+Progreso: FASES 2-6 hechas (usuarios, catalogos, padres, carrusel, parroquias).
+**FASE 7 hecha** (articulos 7.1, noticias 7.2, documentos 7.3): los 3 modulos de
+contenido con `tags jsonb`; cierra BUG-DJANGO-011 (filtro `tags` parametrizado).
+
 Solo se listan los endpoints que el frontend consume hoy (catalogo completo en
 `endpoints-inventory.md`). Cada fila es un contrato que NestJS debe respetar salvo el
 delta anotado en **Estado** y justificado en `findings.md`.
@@ -151,29 +155,31 @@ delta anotado en **Estado** y justificado en `findings.md`.
 
 | Frontend | Metodo | Endpoint Django (`fe3fc98`) | Request | Response | Endpoint NestJS | Estado |
 |---|---|---|---|---|---|---|
-| `Newspaper.getNoticiasPaginated()` (admin, `home`, `post-search`) | GET | `/noticias/` | Query `page`, `page_size`, `title?`, `tags?` (una cadena), `isActive?`. `home`: `page_size=10`, `isActive=true`. | 200 `{count, next, previous, results: Noticia[]}`. | `/noticias/` | pendiente. Busqueda `tags` sobre jsonb (BUG-DJANGO-011). |
-| `Newspaper.getNoticiaById()` (`post-details`) | GET | `/noticias/{id}/` | — | 200 objeto `Noticia` (`tags[]`). | `/noticias/{id}/` | pendiente. |
-| `Newspaper.createNoticia()` / `updateNoticia()` (admin) | POST / PUT | `/noticias/` , `/noticias/{id}/` | `multipart`: `title`, `content`, `tags` = **string JSON**, `picture?`. Bearer + rol. | 201 / 200 objeto `Noticia` (ignorado). | mismas rutas | pendiente. Aceptar `tags` string-JSON en multipart. |
-| `Newspaper.activateNoticia()` (admin) | POST | `/noticias/habilitar/{id}/` | `{}`. Bearer + rol. | 200 `{detail}`. | igual | pendiente. |
-| `Newspaper.deleteNoticia()` (admin) | DELETE | `/noticias/{id}/` | Bearer + rol. | **204 + body** `{detail}`. `isActive=False` + `deletedBy`, sin `deletedAt`. | igual | delta intencional. |
+| `Newspaper.getNoticiasPaginated()` (admin, `home`, `post-search`) | GET | `/noticias/` | Query `page`, `page_size`, `title?`, `tags?` (una cadena), `isActive?`. `home`: `page_size=10`, `isActive=true`. | 200 `{count, next, previous, results: Noticia[]}`. | `/noticias/` | **hecho (7.2)**. `@Public()`, paginado siempre, orden `-createdAt`. Filtro `title` ILIKE, `tags` via `applyTagFilter` (**cierra BUG-DJANGO-011**, EXISTS parametrizado), `isActive` exacto `true`/`false` (tolera mayusculas). |
+| `Newspaper.getNoticiaById()` (`post-details`) | GET | `/noticias/{id}/` | — | 200 objeto `Noticia` (`tags[]`). | `/noticias/{id}/` | **hecho (7.2)**. `@Public()`. Devuelve la fila aunque este soft-deleted (politica canonica). `tags` siempre array. |
+| `Newspaper.createNoticia()` / `updateNoticia()` (admin) | POST / PUT | `/noticias/` , `/noticias/{id}/` | `multipart`: `title`, `content`, `tags` = **string JSON**, `picture?`. Bearer + rol. | 201 / 200 objeto `Noticia` (ignorado). | mismas rutas | **hecho (7.2)**. `@Roles('admin')`. `tags` string-JSON normalizado con `parseTags` (`''`/`null`/`'null'` -> `[]`; invalido -> 400 `{tags:[...]}`). `picture` validada (magic bytes + 5 MB) -> Cloudinary carpeta `noticias`; fallo -> 400 `{picture:[...]}` (SECURITY-008). `createdBy`/`updatedBy` desde `@CurrentUser()` (**BUG-DJANGO-007**). PUT sobre fila borrada -> 404. |
+| `Newspaper.activateNoticia()` (admin) | POST | `/noticias/habilitar/{id}/` | `{}`. Bearer + rol. | 200 `{detail:"Noticia habilitada correctamente."}`. 404 si ya activa. | igual | **hecho (7.2)**. `@Roles('admin')`. Limpia `deletedAt`/`deletedBy`. |
+| `Newspaper.deleteNoticia()` (admin) | DELETE | `/noticias/{id}/` | Bearer + rol. | **204 + body** `{detail}`. `isActive=False` + `deletedBy`, sin `deletedAt`. | igual | **hecho (7.2)**. **204 sin cuerpo**; soft-delete fija `deletedAt`+`deletedBy` (**BUG-DJANGO-013**). |
 
 ## Articulos (solo admin; sin ruta publica)
 
 | Frontend | Metodo | Endpoint Django (`fe3fc98`) | Request | Response | Endpoint NestJS | Estado |
 |---|---|---|---|---|---|---|
-| `Article.getArticulosPaginated()` | GET | `/articulos/` | Query `page`, `page_size`, `title?`, `tags?`, `isActive?`. | 200 `{count, next, previous, results: Articulo[]}`. | `/articulos/` | pendiente. |
-| `Article.createArticulo()` / `updateArticulo()` | POST / PUT | `/articulos/` , `/articulos/{id}/` | **JSON** `{title, content, tags: string[]}`. Bearer + rol. | 201 / 200 objeto `Articulo` (ignorado). | mismas rutas | pendiente. `createdBy` mass assignment (BUG-DJANGO-007). |
-| `Article.activateArticulo()` | POST | `/articulos/habilitar/{id}/` | `{}`. Bearer + rol. | 200 `{detail}`. | igual | pendiente. |
-| `Article.deleteArticulo()` | DELETE | `/articulos/{id}/` | Bearer + rol. | **204 + body** `{detail}`. | igual | delta intencional. |
+| `Article.getArticulosPaginated()` | GET | `/articulos/` | Query `page`, `page_size`, `title?`, `tags?`, `isActive?`. | 200 `{count, next, previous, results: Articulo[]}`. | `/articulos/` | **hecho (7.1)**. `@Public()`, paginado siempre, orden `-createdAt`. `title` ILIKE, `tags` via `applyTagFilter` (**cierra BUG-DJANGO-011**), `isActive` exacto. |
+| `Article.getArticuloById()` | GET | `/articulos/{id}/` | — | 200 objeto `Articulo` (`tags[]`). | `/articulos/{id}/` | **hecho (7.1)**. `@Public()`. Devuelve la fila aunque este soft-deleted. `tags` siempre array. |
+| `Article.createArticulo()` / `updateArticulo()` | POST / PUT | `/articulos/` , `/articulos/{id}/` | **JSON** `{title, content, tags: string[]}`. Bearer + rol. | 201 / 200 objeto `Articulo` (ignorado). | mismas rutas | **hecho (7.1)**. `@Roles('admin')`. Body JSON (sin multipart). `tags` normalizado con `parseTags` (invalido -> 400 `{tags:[...]}`). `createdBy`/`updatedBy` desde `@CurrentUser()`; `whitelist:true` descarta `createdBy` del body (**cierra BUG-DJANGO-007**). PUT sobre fila borrada -> 404. |
+| `Article.activateArticulo()` | POST | `/articulos/habilitar/{id}/` | `{}`. Bearer + rol. | 200 `{detail:"Artículo habilitado correctamente."}`. 404 si ya activa. | igual | **hecho (7.1)**. `@Roles('admin')`. Limpia `deletedAt`/`deletedBy`. Texto exacto de Django (con acento). |
+| `Article.deleteArticulo()` | DELETE | `/articulos/{id}/` | Bearer + rol. | **204 + body** `{detail}`. | igual | **hecho (7.1)**. **204 sin cuerpo**; soft-delete fija `deletedAt`+`deletedBy` (**BUG-DJANGO-013**). |
 
 ## Documentos (solo admin; sin ruta publica)
 
 | Frontend | Metodo | Endpoint Django (`fe3fc98`) | Request | Response | Endpoint NestJS | Estado |
 |---|---|---|---|---|---|---|
-| `Document.getDocumentosPaginated()` | GET | `/documentos/` | Query `page`, `page_size`, `title?`, `tags?`, `type?` (uno de los 9), `isActive?`. | 200 `{count, next, previous, results: Documento[]}`. | `/documentos/` | pendiente. |
-| `Document.createDocumento()` / `updateDocumento()` | POST / PUT | `/documentos/` , `/documentos/{id}/` | `multipart`: `title`, `type`, `tags` = **string JSON**, `document?` (pdf/ppt/pptx). Bearer + rol. | 201 / 200 objeto `Documento` (ignorado). | mismas rutas | pendiente. `validate_tags` (str->JSON); `createdBy` mass assignment. |
-| `Document.activateDocumento()` | POST | `/documentos/habilitar/{id}/` | `{}`. Bearer + rol. | 200 `{detail}`. | igual | pendiente. |
-| `Document.deleteDocumento()` | DELETE | `/documentos/{id}/` | Bearer + rol. | **204 + body** `{detail}`. | igual | delta intencional. |
+| `Document.getDocumentosPaginated()` | GET | `/documentos/` | Query `page`, `page_size`, `title?`, `tags?`, `type?` (uno de los 9), `isActive?`. | 200 `{count, next, previous, results: Documento[]}`. | `/documentos/` | **hecho (7.3)**. `@Public()`, paginado siempre, orden `-createdAt`. `title` ILIKE, `tags` via `applyTagFilter` (**cierra BUG-DJANGO-011**), `type` **exacto sin validar** (igual que Django), `isActive` exacto. |
+| `Document.getDocumentoById()` | GET | `/documentos/{id}/` | — | 200 objeto `Documento` (`tags[]`). | `/documentos/{id}/` | **hecho (7.3)**. `@Public()`. Devuelve la fila aunque este soft-deleted. `tags` siempre array. |
+| `Document.createDocumento()` / `updateDocumento()` | POST / PUT | `/documentos/` , `/documentos/{id}/` | `multipart`: `title`, `type`, `tags` = **string JSON**, `document?` (pdf/ppt/pptx). Bearer + rol. | 201 / 200 objeto `Documento` (ignorado). | mismas rutas | **hecho (7.3)**. `@Roles('admin')`. `document` **obligatorio al crear** -> 400 `{document:['Este campo es requerido.']}` si falta; validado por magic bytes (PDF/PPT/PPTX, 20 MB) -> Cloudinary `resource_type:raw` carpeta `documentos`; fallo -> 400 `{document:[...]}`. `type` `@IsIn` de los 9 -> invalido 400 `{type:[...]}`. `tags` string-JSON via `parseTags`. `createdBy`/`updatedBy` desde `@CurrentUser()` (**BUG-DJANGO-007**). PUT sobre fila borrada -> 404. |
+| `Document.activateDocumento()` | POST | `/documentos/habilitar/{id}/` | `{}`. Bearer + rol. | 200 `{detail:"Documento habilitado correctamente."}`. 404 si ya activa. | igual | **hecho (7.3)**. `@Roles('admin')`. Limpia `deletedAt`/`deletedBy`. |
+| `Document.deleteDocumento()` | DELETE | `/documentos/{id}/` | Bearer + rol. | **204 + body** `{detail}`. | igual | **hecho (7.3)**. **204 sin cuerpo**; soft-delete fija `deletedAt`+`deletedBy` (**BUG-DJANGO-013**). |
 
 ---
 
@@ -188,6 +194,9 @@ delta anotado en **Estado** y justificado en `findings.md`.
 | `deletedAt` siempre en soft-delete | 23, 30, 37, 44, 51, 57, 63 | Coherencia de auditoria (BUG-DJANGO-013). No observable por el FE. |
 | Errores de negocio sin `str(e)` | varios | No filtrar internals (BUG-DJANGO-004). |
 | Respuesta de `/carrusel/` gana 4 campos de auditoria | 13-18 | ADR-004 DQ3-B. Aditivo, no disruptivo. |
+| `tags` invalido (no lista de strings / JSON roto) -> 400 `{tags:[...]}` | articulos, noticias, documentos POST/PUT | `parseTags` endurece: Django aceptaba una lista con no-strings sin chistar. El FE siempre envia `string[]` / string-JSON valido. |
+| Validacion de archivo por magic bytes -> 400 `{campo:[...]}` | noticias `picture`, documentos `document` | SECURITY-008. Django (prod) no validaba nada. El FE solo sube formatos permitidos. |
+| Filtro `?tags=` = `EXISTS(... jsonb_array_elements_text ...)` parametrizado | articulos, noticias, documentos GET | Sustituye `.extra()` deprecado (BUG-DJANGO-011). Mismo resultado observable. |
 
 ## Restricciones que NO se pueden cambiar (deltas prohibidos)
 

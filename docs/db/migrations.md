@@ -119,3 +119,11 @@ de su tabla (ver `src/modules/users/entities/usuario.entity.ts` como referencia)
 3. Pendiente: `NNNN-check-type-role` — DQ2-A (aditiva; `CHECK` en `documentos.type` y
    `usuarios.role`).
 4. ... deltas que surjan por finding/ADR.
+
+### FASE 7 (articulos / noticias / documentos): **sin migracion**
+
+`articulos_articulo`, `noticias_noticia` y `documentos_documento` ya tienen en prod todos
+los campos de `BaseModel` (updatedAt/deletedAt/updatedBy_id/deletedBy_id) + `tags jsonb` +
+las 3 FK de auditoria con sus indices. `migration:generate` para cada entidad de la FASE 7
+solo propuso el ruido `*_like` de `usuarios_usuario` -> **diff estructural vacio**, no se
+crea migracion. (Contraste con carrusel, que en prod era `models.Model` de 6 campos.)
