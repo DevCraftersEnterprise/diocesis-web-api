@@ -64,8 +64,13 @@ delta anotado en **Estado** y justificado en `findings.md`.
 - **`tags`**: `noticias`/`documentos` -> string JSON `'["a","b"]'` en `multipart`;
   `articulos` -> array JSON en body `application/json`. En respuesta siempre array.
 - **Subida de archivos**: `multipart/form-data`; campo `picture` (padres, parroquias,
-  noticias), `document` (documentos), `url` (carrusel). En prod **sin validacion**;
-  carpeta de Cloudinary **hardcodeada** por vista.
+  noticias), `document` (documentos), `url` (carrusel). En prod **sin validacion**; carpeta
+  de Cloudinary **hardcodeada** por vista. NestJS (FASE 4, `src/integrations/cloudinary/` +
+  `src/common/files/`): `CloudinaryService` configura el SDK **una vez** al arrancar
+  (PERF-004); carpeta `<entorno>/<recurso>` — `padres` en prod, `development/padres` fuera
+  (BUG-DJANGO-015). `assertValidImage` valida **por magic bytes** (JPEG/PNG/WebP/GIF) +
+  `<= 5 MB` (SECURITY-008) -> 400 `{ "<campo>": [...] }`. Fallo de subida -> 5xx generico,
+  nunca `str(e)` (BUG-DJANGO-004). Guarda la `secure_url` como string (igual que Django).
 
 ---
 
@@ -103,12 +108,12 @@ delta anotado en **Estado** y justificado en `findings.md`.
 
 | Frontend | Metodo | Endpoint Django (`fe3fc98`) | Request | Response | Endpoint NestJS | Estado |
 |---|---|---|---|---|---|---|
-| `Reverends.getPadresPaginated()` (admin, `reverend-search`) | GET | `/padres/` | Query `page`, `page_size`, `firstName?`, `lastName?`, `isActive?`. | 200 `{count, next, previous, results: Padre[]}`. | `/padres/` | pendiente. |
-| `Reverends.getAllPadres()` (`parishes.ts`) | GET | `/padres/` | Query `isActive=true` (**sin** `page`/`page_size`). | 200 **array** `Padre[]` (paginacion condicional). El FE usa `Array.isArray(res)`. | `/padres/` | pendiente. **Delta prohibido**: sin `page` debe devolver array (APIC-003). |
-| `Reverends.getPadreById()` (`reverend-details`, `parish-details`) | GET | `/padres/{id}/` | — | 200 objeto `Padre`. | `/padres/{id}/` | pendiente. |
-| `Reverends.createPadre()` / `updatePadre()` (admin) | POST / PUT | `/padres/` , `/padres/{id}/` | `multipart`: `firstName, lastName, birthDate` (`YYYY-MM-DD`), `email, facebook, instagram, twitter` (cadena vacia si no hay valor), `picture` (solo si hay archivo). Bearer + rol. | 201 / 200 objeto `Padre` (FE ignora body). Invalido -> 400 `{campo:[...]}`. | mismas rutas | pendiente. Normalizar `""` -> null en opcionales. Añadir validacion de imagen. |
-| `Reverends.activatePadre()` (admin) | POST | `/padres/habilitar/{id}/` | Body `{}`. | 200 `{detail}`. `isActive=False` requerido -> 404 si ya activo. | igual | pendiente. |
-| `Reverends.deletePadre()` (admin) | DELETE | `/padres/{id}/` | Bearer + rol. | **204 + body** `{detail}`. Soft-delete `isActive=False` + `deletedBy`, **sin `deletedAt`**. | igual | delta intencional (204 sin body; `deletedAt` siempre). |
+| `Reverends.getPadresPaginated()` (admin) | GET | `/padres/` | Query `page`, `page_size`, `firstName?`, `lastName?`, `isActive?`, `birthDay?`, `birthMonth?`. | 200 `{count, next, previous, results: Padre[]}`. | `/padres/` | **hecho (4.2)**. `@Public()`. Con `page`/`page_size` -> objeto paginado. |
+| `Reverends.getAllPadres()` (`parishes.ts`) | GET | `/padres/` | Query `isActive=true` (**sin** `page`/`page_size`). | 200 **array** `Padre[]`. | `/padres/` | **hecho (4.2)**. Sin `page`/`page_size` -> **array plano** (APIC-003 preservado). |
+| `Reverends.getPadreById()` (`reverend-details`, `parish-details`) | GET | `/padres/{id}/` | — | 200 objeto `Padre`. | `/padres/{id}/` | **hecho (4.2)**. `@Public()`. Devuelve la fila aunque este soft-deleted (politica canonica). |
+| `Reverends.createPadre()` / `updatePadre()` (admin) | POST / PUT | `/padres/` , `/padres/{id}/` | `multipart`: `firstName, lastName, birthDate` (`YYYY-MM-DD`), `email, facebook, instagram, twitter` (cadena vacia si no hay valor), `picture` (solo si hay archivo). Bearer + rol. | 201 / 200 objeto `Padre`. Invalido -> 400 `{campo:[...]}`. | mismas rutas | **hecho (4.2)**. `@Roles('admin')`. `""` -> `null` en opcionales. `picture`: valida por magic bytes (JPEG/PNG/WebP/GIF) + <=5 MB (**SECURITY-008**) -> 400 `{picture:[...]}`; sube a Cloudinary (config unica **PERF-004**, carpeta por entorno **BUG-DJANGO-015**). Error de subida -> 5xx generico (**BUG-DJANGO-004**). PUT sobre fila borrada -> 404. |
+| `Reverends.activatePadre()` (admin) | POST | `/padres/habilitar/{id}/` | Body `{}`. | 200 `{detail:"Padre habilitado correctamente."}`. 404 si ya activo. | igual | **hecho (4.2)**. `@Roles('admin')`. Limpia `deletedAt`/`deletedBy`. |
+| `Reverends.deletePadre()` (admin) | DELETE | `/padres/{id}/` | Bearer + rol. | **204 + body** `{detail}`. | igual | **hecho (4.2)**. `@Roles('admin')`. **204 sin cuerpo**; soft-delete fija `deletedAt`+`deletedBy` (BUG-DJANGO-013). |
 
 ## Decanatos
 
