@@ -33,6 +33,15 @@ describe('AppController (e2e)', () => {
     expect(res.body).not.toHaveProperty('statusCode');
   });
 
+  it('GET /health -> 200 con la BD arriba (Terminus)', async () => {
+    const res = await request(app.getHttpServer()).get('/health').expect(200);
+
+    expect(res.body).toMatchObject({
+      status: 'ok',
+      details: { database: { status: 'up' } },
+    });
+  });
+
   afterEach(async () => {
     await app.close();
   });
