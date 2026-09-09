@@ -1,4 +1,4 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
+import { Check, Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { Usuario } from '../../users/entities/usuario.entity';
 
@@ -17,8 +17,12 @@ export const DOCUMENT_TYPES = [
 
 export type DocumentoType = (typeof DOCUMENT_TYPES)[number];
 
+/** Expresion del CHECK de dominio (migracion `CheckTypeRoleDomain`, ADR-004 DQ2-A). */
+const TYPE_CHECK_EXPR = `"type" IN (${DOCUMENT_TYPES.map((t) => "'" + t + "'").join(',')})`;
+
 /** Mapea `documentos_documento` (`BaseModel` + title/document/type/tags + createdBy). Patron 2.1. */
 @Entity('documentos_documento')
+@Check('documentos_documento_type_check', TYPE_CHECK_EXPR)
 export class Documento extends BaseEntity {
   @Column('varchar', { length: 255 })
   title!: string;

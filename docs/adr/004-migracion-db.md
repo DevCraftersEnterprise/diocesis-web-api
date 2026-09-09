@@ -64,7 +64,10 @@
 6. **`CHECK` de dominio (decision DQ2-A).** `documentos.type` y `usuarios.role` reciben
    `CHECK (... IN (...))` mediante una **migracion de endurecimiento posterior a la
    baseline** (no en la baseline). Aditivo, sin riesgo con los datos actuales (todos
-   validos). Se aplica en el slice del modulo correspondiente o en la Fase 8.
+   validos). **Implementado (Tarea 8.2):** migracion `1788981168539-CheckTypeRoleDomain`
+   (constraints `documentos_documento_type_check` y `usuarios_usuario_role_check`). Las
+   entidades `Documento`/`Usuario` los declaran con `@Check(name, expr)` -> `migration:generate`
+   sigue limpio. Aplicada al oraculo.
 
 7. **`carrusel` (decision DQ3-B).** Se alinea `carrusel_carrusel` al `BaseModel` completo:
    una **migracion aditiva posterior a la baseline** anade `updatedAt`
@@ -100,7 +103,8 @@
 
 1. `0001-baseline` — esquema actual de prod (no-op contra prod; se ejecuta solo en BD vacia).
 2. `0002-carrusel-basemodel-fields` — DQ3-B (aditiva; backfill de 21 filas).
-3. `NNNN-check-type-role` — DQ2-A (aditiva; `CHECK` en `documentos.type` y `usuarios.role`).
+3. `1788981168539-CheckTypeRoleDomain` — DQ2-A (aditiva; `CHECK` en `documentos.type` y
+   `usuarios.role`). Aplicada al oraculo en la Tarea 8.2.
 4. ... deltas que surjan por finding/ADR.
 
 ## Alternativas consideradas
