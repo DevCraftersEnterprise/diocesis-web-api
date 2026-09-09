@@ -87,6 +87,24 @@ Cuando existan las entidades, `npm run migration:generate` contra una BD restaur
 nombres). Cualquier diff estructural = delta no intencionado -> se reconcilia (ADR-004, pto. 9).
 Pendiente de automatizar en CI.
 
+### Ruido tolerado: indices `varchar_pattern_ops` `*_like`
+
+Django crea, por cada `CharField(unique=True)`, un indice extra
+`<tabla>_<campo>_<hash>_like` con opclass `varchar_pattern_ops` (acelera `LIKE 'prefijo%'`).
+TypeORM 0.3 **no modela opclasses**, asi que `migration:generate` SIEMPRE propone
+`DROP INDEX ..._like` para esas columnas. **Se ignora conscientemente** (ADR-004 pto. 9):
+la migracion generada no se aplica. En `usuarios_usuario` son
+`usuarios_usuario_username_be9def2b_like` y `usuarios_usuario_email_0a82e5f9_like`.
+
+### Patron FK de auditoria en las entidades (decision Tarea 2.1)
+
+`BaseEntity` solo puede llevar decoradores genericos; los nombres de constraint/indice de
+`updatedBy_id` / `deletedBy_id` son **por tabla**. Por eso **cada entidad** declara sus
+relaciones `updatedBy` / `deletedBy` con `@ManyToOne` + `@JoinColumn({ name,
+foreignKeyConstraintName })` + `@Index(<nombre>)` usando los nombres **exactos de Django**
+de su tabla (ver `src/modules/users/entities/usuario.entity.ts` como referencia). Con eso
+`migration:generate` solo deja el ruido `*_like` de arriba.
+
 ## Orden previsto de migraciones (ADR-004)
 
 1. `0001-baseline` — esquema actual de prod.
