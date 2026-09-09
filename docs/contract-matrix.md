@@ -38,7 +38,11 @@ delta anotado en **Estado** y justificado en `findings.md`.
     pagina HTML 500; NestJS devuelve este JSON. El FE solo muestra un toast generico.
 - **Paginacion**: el FE lee **`results`** y **`count`**. No lee `next`/`previous`. -> en
   NestJS pueden ser `null`/relativos (delta permitido). El FE envia `page` + `page_size`
-  (`page = offset/limit + 1`).
+  (`page = offset/limit + 1`). Helper en `src/common/pagination/` (Tarea 1.6):
+  `PaginationQueryDto` (`page`>=1, `page_size` recortado a 100 como DRF) +
+  `buildPage(items, total, query)` -> `{count, next:null, previous:null, results}`, con
+  404 `{detail}` ante pagina fuera de rango (replica DRF). `/padres/` sin params sigue
+  devolviendo **array plano** (APIC-003): ese endpoint no usa el helper.
 - **Cuerpo de create/update**: el FE **ignora el body** de POST/PUT (toast + recarga).
   Excepciones que SI lo leen: `login` (`access`), `loadProfile` (`User`), `home`
   (`results`), `post-details`, `parish-details`, `reverend-details`.
