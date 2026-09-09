@@ -7,6 +7,7 @@ import { LoggingModule } from './common/logging/logging.module';
 import { configuration } from './config/configuration';
 import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './health/health.module';
+import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 
 @Module({
@@ -21,6 +22,7 @@ import { UsersModule } from './modules/users/users.module';
     DatabaseModule,
     CommonModule,
     HealthModule,
+    AuthModule,
     UsersModule,
   ],
   controllers: [AppController],
