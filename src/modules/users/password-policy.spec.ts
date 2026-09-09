@@ -27,6 +27,18 @@ describe('assertPasswordPolicy', () => {
     expect(() => assertPasswordPolicy('12345678')).toThrow(BadRequestException);
   });
 
+  it('rechaza una contrasena muy comun (BUG-DJANGO-005, tambien mayusculas)', () => {
+    expect(bodyOf(() => assertPasswordPolicy('password'))).toHaveProperty(
+      'password',
+    );
+    expect(() => assertPasswordPolicy('QWERTY123')).toThrow(
+      BadRequestException,
+    );
+    expect(() => assertPasswordPolicy('diocesis123')).toThrow(
+      BadRequestException,
+    );
+  });
+
   it('rechaza contrasena parecida al username o al email', () => {
     expect(() =>
       assertPasswordPolicy('anabanana', { username: 'anabanana' }),

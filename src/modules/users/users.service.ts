@@ -222,7 +222,9 @@ export class UsersService {
    * `POST /users/usuarios/cargar-por-csv/` (admin/super). Cabeceras
    * `username,email,role[,password]`; `password` ausente -> se usa el `username` (como
    * Django). Recorre fila a fila acumulando `creados` / `errores`, sin abortar.
-   * Nota: esta via NO aplica la politica de contrasenas (igual que Django).
+   * A diferencia de Django, esta via **si** aplica la politica de contrasenas
+   * (`assertPasswordPolicy`) por fila (BUG-DJANGO-005, Tarea 8.4): `password` = `username`
+   * la rechaza por "parecida al usuario".
    */
   async createFromCsv(csv: Buffer, actor: Usuario): Promise<CsvImportResult> {
     let rows: Record<string, string>[];
@@ -263,6 +265,17 @@ export class UsersService {
       }
       if (await this.repo.existsBy({ username })) {
         errores.push(`Usuario ya existe: ${username}`);
+        continue;
+      }
+      try {
+        assertPasswordPolicy(password, { username, email });
+      } catch (e) {
+        const body = (e as BadRequestException).getResponse() as {
+          password?: string[];
+        };
+        errores.push(
+          `Contrasena invalida para ${username}: ${(body.password ?? ['no cumple la politica']).join(' ')}`,
+        );
         continue;
       }
 

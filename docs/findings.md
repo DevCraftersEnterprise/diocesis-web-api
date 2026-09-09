@@ -25,7 +25,8 @@ El resto de findings 001-022 se re-verificaron contra `fe3fc98` y siguen validos
 Actualizado en la FASE 7 (articulos/noticias/documentos): **BUG-DJANGO-011 RESUELTO**;
 BUG-DJANGO-004/007/013 y SECURITY-008 pasan a RESUELTO para todos los modulos migrados.
 Actualizado en la FASE 8 (endurecimiento): **SECURITY-006 RESUELTO** (throttler en auth,
-Tarea 8.1); nuevo **SECRET-006** (volcado de fila via `DETAIL` de Postgres, Tarea 8.2).
+Tarea 8.1); nuevo **SECRET-006** (volcado de fila via `DETAIL` de Postgres, Tarea 8.2);
+**BUG-DJANGO-005 RESUELTO** (lista de contrasenas comunes + politica en la via CSV, Tarea 8.4).
 
 ---
 
@@ -47,7 +48,7 @@ Tarea 8.1); nuevo **SECRET-006** (volcado de fila via `DETAIL` de Postgres, Tare
 | BUG-DJANGO-002 | SECURITY | `apps/usuarios/views.py` ResetPasswordView | La nueva contrasena se fija igual al `username` (predecible). | **RESUELTO (Tarea 2.11)**: `reset-password` genera contrasena aleatoria de 16 chars (`generatePassword`) y la devuelve en la respuesta `{mensaje, password}` para que el admin la comunique. |
 | BUG-DJANGO-003 | BUG | `apps/parroquias/views.py` GET filtro `colonia` | `filter(coloniaId__nombre__icontains=...)`: el campo es `name`, no `nombre` -> FieldError -> 500 si llega `?colonia=`. | **RESUELTO (Tarea 6.1)**: `ParishesService.list` hace `leftJoin('p.colonia','col')` y filtra `col.name ILIKE :colonia`. Verificado con e2e. |
 | BUG-DJANGO-004 | SECURITY | varios `views.py` (carrusel, padres, noticias, documentos, usuarios) | `except Exception as e: return Response({"error": str(e)})` filtra mensajes internos al cliente. | NestJS: error generico + log interno. **Mitigado a nivel global (Tarea 1.4)**: `AllExceptionsFilter` fuerza `{detail:"Error interno del servidor."}` en todo 5xx y solo loguea la traza. Al migrar cada modulo (Fase 5-8) se eliminan los `except Exception` que replicaban el anti-patron. |
-| BUG-DJANGO-005 | SECURITY | `config/settings.py` + serializers/vistas de usuario | `AUTH_PASSWORD_VALIDATORS` configurado pero nunca invocado; se aceptan contrasenas arbitrarias. | **PARCIAL (Tareas 2.8/2.11)**: `assertPasswordPolicy` (min 8, no solo numeros, no parecida a username/email) en crear-usuario y change-password. **Pendiente**: `CommonPasswordValidator` (lista) y aplicarla tambien en la via CSV (Django tampoco lo hace). |
+| BUG-DJANGO-005 | SECURITY | `config/settings.py` + serializers/vistas de usuario | `AUTH_PASSWORD_VALIDATORS` configurado pero nunca invocado; se aceptan contrasenas arbitrarias. | **RESUELTO (Tareas 2.8/2.11 + 8.4)**: `assertPasswordPolicy` (min 8, no solo numeros, no parecida a username/email, **no en la lista de contrasenas comunes** `COMMON_PASSWORDS` — subconjunto curado ~180, no los 20k de Django) en crear-usuario, change-password **y ahora el alta por CSV** (por fila; `password=username` la rechaza). Delta vs Django: la via CSV de Django no valida nada. |
 | BUG-DJANGO-020 | SECURITY | `apps/usuarios/views.py` UsuarioAPIView.delete | Soft-delete no toca `is_active`; un usuario "eliminado" por DELETE puede seguir haciendo login. | **RESUELTO (Tareas 2.4/2.9)**: `isActiveUser()` = `isActive && isActiveAuth`; `softDelete` y `toggleStatus` mueven **ambos** flags. `JwtStrategy` exige ambos. |
 | BUG-DJANGO-021 | SECURITY | `apps/usuarios/views.py` UsuarioAPIView.put / .delete | Un rol `user` podia editar/desactivar a cualquiera, incluido un `super`. | **RESUELTO (Tareas 2.6/2.9)**: `@Roles('admin')` en put/delete/cambiar-estado/reset + `assertCanManage` (admin no actua sobre super) centralizado. |
 

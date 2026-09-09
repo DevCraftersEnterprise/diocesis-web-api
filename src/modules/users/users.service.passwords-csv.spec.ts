@@ -92,7 +92,8 @@ describe('UsersService.createFromCsv', () => {
       [
         'username,email,role,password',
         'nuevo1,n1@x.test,user,clave-larga-1',
-        'nuevo2,n2@x.test,user,', // password vacio -> usa username
+        'nuevo2,n2@x.test,user,', // password vacio -> usa username -> politica lo rechaza (8.4)
+        'debil3,d3@x.test,user,password', // contrasena comun -> rechazada (8.4)
         'malrol,mr@x.test,jefe,x',
         'ya_existe,ye@x.test,user,x',
         'sinemail,,user,x',
@@ -102,10 +103,12 @@ describe('UsersService.createFromCsv', () => {
 
     const res = await service.createFromCsv(csv, actor());
 
-    expect(res.creados).toEqual(['nuevo1', 'nuevo2']);
-    expect(res.errores).toHaveLength(4);
-    expect(res.mensaje).toBe('Se procesaron 2 usuarios.');
-    expect(repo.insert).toHaveBeenCalledTimes(2);
+    expect(res.creados).toEqual(['nuevo1']);
+    expect(res.errores).toHaveLength(6);
+    expect(res.errores.some((e) => e.includes('nuevo2'))).toBe(true);
+    expect(res.errores.some((e) => e.includes('debil3'))).toBe(true);
+    expect(res.mensaje).toBe('Se procesaron 1 usuarios.');
+    expect(repo.insert).toHaveBeenCalledTimes(1);
   });
 
   it('CSV ilegible -> 400 { error }', async () => {
