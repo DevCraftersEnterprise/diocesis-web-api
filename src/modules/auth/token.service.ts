@@ -29,6 +29,11 @@ export class TokenService {
     return { access, refresh };
   }
 
+  /** Solo un nuevo access token (refresh sin rotacion, como simplejwt). */
+  issueAccess(userId: string): Promise<string> {
+    return this.sign(userId, 'access', this.jwtConfig.accessTtl);
+  }
+
   /** Valida un refresh token y devuelve su payload. Lanza 401 con la forma de simplejwt. */
   async verifyRefresh(token: string): Promise<JwtPayload> {
     let payload: JwtPayload;

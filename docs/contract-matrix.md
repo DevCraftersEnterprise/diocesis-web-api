@@ -65,10 +65,10 @@ delta anotado en **Estado** y justificado en `findings.md`.
 
 | Frontend | Metodo | Endpoint Django (`fe3fc98`) | Request | Response | Endpoint NestJS | Estado |
 |---|---|---|---|---|---|---|
-| `Auth.login()` (`login.ts`) | POST | `/token/login/` | JSON `{username, password}`. Sin auth. | 200 `{access, refresh}`. Invalidas -> 401 `{detail:"No active account found with the given credentials"}`. | `/token/login/` | pendiente |
-| `Auth.loadProfile()` (`layout.ts` admin) | GET | `/users/usuarios/{id}/` | `id` = `user_id` del JWT. Bearer. | 200 objeto `User`. | `/users/usuarios/{id}/` | pendiente |
+| `Auth.login()` (`login.ts`) | POST | `/token/login/` | JSON `{username, password}`. Sin auth. | 200 `{access, refresh}`. Invalidas -> 401 `{detail:"No active account found with the given credentials"}`. | `/token/login/` | **hecho (2.5)**. HS256/`JWT_SECRET` nuevo (corte duro, ADR-002). Payload `{user_id,token_type,jti,iat,exp}`. Verifica PBKDF2 Django y re-hashea a argon2id en el 1er login. Falta body -> 400 `{campo:[...]}`. |
+| `Auth.loadProfile()` (`layout.ts` admin) | GET | `/users/usuarios/{id}/` | `id` = `user_id` del JWT. Bearer. | 200 objeto `User`. | `/users/usuarios/{id}/` | pendiente (2.7) |
 
-`/token/refresh/` no se usa.
+`/token/refresh/` no se usa. NestJS lo implementa igual (`{refresh}` -> 200 `{access}`, sin rotacion ni blacklist) por ser endpoint del contrato (2.5).
 
 ## Usuarios (`/dashboard/users`)
 
