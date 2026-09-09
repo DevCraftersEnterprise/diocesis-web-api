@@ -46,6 +46,13 @@ export interface LogConfig {
   level: LogLevel;
 }
 
+export interface ThrottleConfig {
+  /** Peticiones permitidas por ventana en los endpoints sensibles de auth (SECURITY-006). */
+  authLimit: number;
+  /** Ventana en milisegundos. */
+  authTtlMs: number;
+}
+
 export interface Config {
   app: AppConfig;
   database: DatabaseConfig;
@@ -53,4 +60,5 @@ export interface Config {
   cloudinary: CloudinaryConfig;
   cors: CorsConfig;
   log: LogConfig;
+  throttle: ThrottleConfig;
 }

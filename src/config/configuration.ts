@@ -32,5 +32,9 @@ export const configuration = registerAs(CONFIG_NAMESPACE, (): Config => {
     },
     cors: { origins },
     log: { level: env.LOG_LEVEL },
+    throttle: {
+      authLimit: env.THROTTLE_AUTH_LIMIT,
+      authTtlMs: env.THROTTLE_AUTH_TTL_MS,
+    },
   };
 });
