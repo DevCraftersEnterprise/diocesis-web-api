@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthModule } from '../auth/auth.module';
 import { Usuario } from './entities/usuario.entity';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 
 /** Modulo de usuarios (FASE 2). Lectura en 2.7; escritura/CSV/contrasenas en 2.8-2.11. */
 @Module({
-  imports: [TypeOrmModule.forFeature([Usuario])],
+  imports: [TypeOrmModule.forFeature([Usuario]), AuthModule],
   controllers: [UsersController],
   providers: [UsersService],
   exports: [TypeOrmModule, UsersService],
