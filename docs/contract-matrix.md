@@ -100,9 +100,9 @@ delta anotado en **Estado** y justificado en `findings.md`.
 
 | Frontend | Metodo | Endpoint Django (`fe3fc98`) | Request | Response | Endpoint NestJS | Estado |
 |---|---|---|---|---|---|---|
-| `Carousel.getAll()` (`home`, admin) | GET | `/carrusel/` | Sin auth. | 200 **array** `Carrusel[]` (`id, url, isImage, isActive, createdAt, createdBy`), solo `isActive=true`, orden `-createdAt`. | `/carrusel/` | pendiente. Entidad de 6 campos (ADR-004 DQ3-B: los 4 de auditoria llegan por migracion aditiva; la respuesta ganara `updatedAt`/`deletedAt`/`updatedBy`/`deletedBy` = delta aditivo no disruptivo). |
-| `Carousel.create()` (admin) | POST | `/carrusel/` | `multipart`: `url` = archivo, `isImage` = `"true"`/`"false"`. Bearer + rol. | 201 objeto `Carrusel`. Error -> 400 `{error}`. | `/carrusel/` | pendiente. Añadir validacion de contenido (mejora consciente; prod no valida). |
-| `Carousel.delete()` (admin) | DELETE | `/carrusel/{id}/` | Bearer + rol. | **204 + body** `{detail}` (FE lo ignora). Solo `isActive=False`. | `/carrusel/{id}/` | delta intencional (204 sin body; `deletedAt` cuando exista la columna). |
+| `Carousel.getAll()` (`home`, admin) | GET | `/carrusel/` | Sin auth. | 200 **array** `Carrusel[]`, solo `isActive=true`, orden `-createdAt`. | `/carrusel/` | **hecho (5.2)**. `@Public()`. Migracion `0002` (DQ3-B) alinea `carrusel_carrusel` al `BaseModel`; la respuesta gana `updatedAt`/`deletedAt`/`updatedBy`/`deletedBy` (**delta aditivo**; el `Carrusel` del FE es interfaz e ignora claves extra). |
+| `Carousel.create()` (admin) | POST | `/carrusel/` | `multipart`: `url` = archivo, `isImage` = `"true"`/`"false"` (default `true`). Bearer + rol. | 201 objeto `Carrusel`. Sin archivo -> 400 `{error}`. | `/carrusel/` | **hecho (5.2)**. `@Roles('admin')`. Valida por contenido: `isImage=true` -> imagen (5 MB); `false` -> video MP4/WebM/QuickTime (50 MB) -> 400 `{url:[...]}` (SECURITY-008). Sube a `carrusel/imagenes`|`carrusel/videos`. Error de subida -> 5xx generico (BUG-DJANGO-004). |
+| `Carousel.delete()` (admin) | DELETE | `/carrusel/{id}/` | Bearer + rol. | **204 + body** `{detail}` (FE lo ignora). | `/carrusel/{id}/` | **hecho (5.2)**. `@Roles('admin')`. **204 sin cuerpo**; soft-delete fija `deletedAt`+`deletedBy` (ya existen tras `0002`). PUT `/habilitar/{id}/` (**PUT**): 400 `{detail}` si ya activo. PUT/DELETE sobre fila borrada -> 404 (politica canonica). |
 
 ## Padres / Reverends
 
