@@ -54,8 +54,40 @@ de NestJS cuando exista.
 (ver `types.ts`): `id`, `method`, `path` (con query), `body` o `form`, `auth`, `ignore`,
 `expectedDelta` (un diff con `expectedDelta` se reporta como `DELTA`, no como `FALLO`).
 
-En FASE 0 solo hay `public-get.ts` (GET publicos + `login` invalido). Se amplia por
-modulo en Fase 2+, en paralelo a cada *vertical slice*.
+- `public-get.ts`: listas publicas de los 10 modulos (paginadas y planas), con
+  `IGNORE_PAGINATION_LINKS` para `next`/`previous` (el FE no los usa) y `expectedDelta`
+  donde aplica (BUG-DJANGO-023 en carrusel, BUG-DJANGO-024 en decanatos).
+- `detail-and-errors.ts`: detalle por id (`GET /{recurso}/{id}/`) de cada catalogo/
+  contenido con datos reales en el oraculo, un 404 y varios 401 (endpoint protegido sin
+  token) + la validacion de `POST /token/refresh/` sin body.
+
+**Estado (Tarea 9.4):** 22 casos, todos de solo lectura y sin efectos secundarios (el
+guard/pipe corta antes de tocar la BD en los casos de error). `npm run parity -- --record`
++ `npm run parity` limpio: 0 `FALLO`, deltas solo donde hay un `expectedDelta` documentado.
+Auto-chequeo (`--compare --live` con `PARITY_NEST_URL` = oraculo) da **22/22 OK**, sin
+ningun delta — confirma que la normalizacion no enmascara nada que no deba.
+
+### Por que NO hay casos autenticados ni mutaciones (POST/PUT/DELETE reales)
+
+El oraculo Django y NestJS **comparten la misma BD** (`docs/oracle/`, puerto `5433`) para
+que una peticion idéntica lea el mismo dato real. Eso hace que dos tipos de caso sean
+peligrosos para un arnes que se re-ejecuta muchas veces:
+
+1. **Login exitoso**: el primer login correcto de un usuario reescribe su
+   `password` de PBKDF2 (Django) a `argon2id` (NestJS, ADR-002 pto. 4). Django no sabe
+   leer `argon2id` -> el login de ESE usuario por el lado oraculo falla en toda corrida
+   futura, hasta resetear la contrasena a mano (`manage.py changepassword`). No hay forma
+   de deshacer esto automaticamente entre corridas.
+2. **Mutaciones (POST/PUT/DELETE con exito)**: dejarian filas nuevas o cambios
+   permanentes en el oraculo compartido en cada corrida (sin transaccion, sin rollback);
+   una segunda corrida ya no partiria del mismo estado (p. ej. "usuario ya existe").
+
+La paridad de las rutas autenticadas y de las mutaciones **si esta cubierta**, pero por
+los tests e2e (`test/*.e2e-spec.ts`, 100+ casos contra el mismo oraculo) — que siembran
+sus propios usuarios/filas desechables y los limpian en `afterAll`, evitando ambos
+problemas. Este arnes se queda deliberadamente en las rutas publicas + los 401/404/400 sin
+efecto, que es exactamente lo que un `GET`/error de verdad hace en produccion en cada
+carga de pagina del frontend.
 
 ## `__baselines__/`
 

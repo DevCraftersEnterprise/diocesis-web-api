@@ -58,7 +58,9 @@ function errMessage(err: unknown): string {
 }
 
 function short(value: unknown, max = 240): string {
-  const text = JSON.stringify(value);
+  // `JSON.stringify` devuelve `undefined` (no un string) para `undefined` -- pasa a
+  // menudo en un diff: una clave existe en un lado y no en el otro.
+  const text = value === undefined ? 'undefined' : JSON.stringify(value);
   return text.length > max
     ? `${text.slice(0, max)}... (${text.length} chars)`
     : text;
