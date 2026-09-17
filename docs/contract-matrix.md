@@ -10,6 +10,8 @@ contenido con `tags jsonb`; cierra BUG-DJANGO-011 (filtro `tags` parametrizado).
 **FASE 8 hecha** (endurecimiento): rate limiting en auth (8.1, SECURITY-006), CHECK de
 dominio `type`/`role` (8.2), parametros argon2id explicitos (8.3), lista de contrasenas
 comunes + politica en CSV (8.4, BUG-DJANGO-005), inventario de sobres (8.5, APIC-002).
+**FASE 9**: preparacion de despliegue (9.1-9.3) + arnes de paridad completado y corrido
+de punta a punta contra el oraculo real (9.4, TEST-001): 22 casos, 0 fallos.
 
 Solo se listan los endpoints que el frontend consume hoy (catalogo completo en
 `endpoints-inventory.md`). Cada fila es un contrato que NestJS debe respetar salvo el
@@ -233,6 +235,8 @@ delta.
 | **429** `{detail}` por rate limiting | `POST /token/login/`, `PUT .../change-password/`, `POST .../reset-password/{id}/` | SECURITY-006 (8.1). Django no limita. 10/60s/IP por defecto (`THROTTLE_AUTH_*`). |
 | Politica de contrasenas en el alta por CSV | `POST /users/usuarios/cargar-por-csv/` | BUG-DJANGO-005 (8.4). Django no valida en esa via; NestSi -> fila invalida a `errores`. |
 | `CHECK` de dominio en BD (`documentos.type`, `usuarios.role`) | — (nivel BD, no observable) | ADR-004 DQ2-A (8.2). Defensa en profundidad; la app ya valida con `@IsIn`. |
+| Texto de `{detail}` en 401/404 en espanol (NestJS) vs ingles (Django, defaults de DRF) | todos (401 sin token; 404 generico) | Surgido en el arnes de paridad (Tarea 9.4). Status y forma `{detail}` identicos. El FE nunca compara el texto: en 401/403 hace logout global por **status**; `login.ts` solo pasa el `detail` a `console.error`. Coherente con el resto de mensajes propios de NestJS (todos en espanol). |
+| Cantidad/texto de mensajes en `{campo:[...]}` de validacion | validacion de DTO (`class-validator`) vs `serializers` de DRF | Mismo hallazgo (Tarea 9.4, caso `refresh-missing-body`). La forma `{campo:[...]}` esta garantizada desde FASE 1; el contenido exacto de cada mensaje nunca se prometio igual. |
 
 ## Restricciones que NO se pueden cambiar (deltas prohibidos)
 
