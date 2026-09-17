@@ -1,0 +1,43 @@
+services:
+  - type: web
+    name: diocesis-backend-nest
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start:prod
+    healthCheckPath: /health
+    envVars:
+      # NODE_ENV=production activa `trust proxy` (Tarea 9.1) y las carpetas de Cloudinary
+      # sin prefijo de entorno (BUG-DJANGO-015).
+      - key: NODE_ENV
+        value: production
+      # Render inyecta PORT automaticamente; no hace falta declararlo.
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_SSL
+        value: 'true'
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_ACCESS_TTL
+        value: 8h
+      - key: JWT_REFRESH_TTL
+        value: 1d
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      # Dominio(s) del frontend, separados por coma. Vacio = sin CORS cross-origin
+      # (fail-closed, SECURITY-003).
+      - key: CORS_ORIGINS
+        sync: false
+      - key: LOG_LEVEL
+        value: info
+      # Rate limiting de auth (SECURITY-006, Tarea 8.1). Los defaults del codigo ya
+      # aplican si se omiten; se declaran aqui para que queden visibles/ajustables.
+      - key: THROTTLE_AUTH_LIMIT
+        value: '10'
+      - key: THROTTLE_AUTH_TTL_MS
+        value: '60000'
