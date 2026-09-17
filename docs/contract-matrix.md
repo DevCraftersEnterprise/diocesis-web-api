@@ -71,8 +71,10 @@ delta anotado en **Estado** y justificado en `findings.md`.
     `deletedAt` -> BUG-DJANGO-013). `habilitar/` limpia `deletedAt`/`deletedBy`.
   - Respuesta de `DELETE`: **204 sin cuerpo** (Django devuelve 204 + `{detail}`, invalido).
 - **camelCase** en request y response, **obligatorio**.
-- **Fechas**: `DateField` -> `YYYY-MM-DD`; `DateTimeField` -> ISO 8601 UTC. Formato exacto
-  -> pendiente runtime.
+- **Fechas**: `DateField` -> `YYYY-MM-DD` (columna `date`, string tal cual, p. ej.
+  `openingDate`/`birthDate`); `DateTimeField` -> ISO 8601 UTC (`toISOString()`, p. ej.
+  `createdAt`/`updatedAt`/`deletedAt`). Verificado contra el oraculo (copia de prod) en
+  todos los modulos migrados; helper `iso()` repetido en cada `*.response.ts`.
 - **`tags`**: `noticias`/`documentos` -> string JSON `'["a","b"]'` en `multipart`;
   `articulos` -> array JSON en body `application/json`. En respuesta siempre array.
 - **Subida de archivos**: `multipart/form-data`; campo `picture` (padres, parroquias,
@@ -114,7 +116,7 @@ delta.
 | Frontend | Metodo | Endpoint Django (`fe3fc98`) | Request | Response | Endpoint NestJS | Estado |
 |---|---|---|---|---|---|---|
 | `Auth.login()` (`login.ts`) | POST | `/token/login/` | JSON `{username, password}`. Sin auth. | 200 `{access, refresh}`. Invalidas -> 401 `{detail:"No active account found with the given credentials"}`. | `/token/login/` | **hecho (2.5; 8.1)**. HS256/`JWT_SECRET` nuevo (corte duro, ADR-002). Payload `{user_id,token_type,jti,iat,exp}`. Verifica PBKDF2 Django y re-hashea a argon2id en el 1er login (parametros argon2id fijados, 8.3). Falta body -> 400 `{campo:[...]}`. **Rate limit (8.1, SECURITY-006)**: `THROTTLE_AUTH_LIMIT` (10) por `THROTTLE_AUTH_TTL_MS` (60s) e IP -> exceso 429 `{detail}`. |
-| `Auth.loadProfile()` (`layout.ts` admin) | GET | `/users/usuarios/{id}/` | `id` = `user_id` del JWT. Bearer. | 200 objeto `User`. | `/users/usuarios/{id}/` | pendiente (2.7) |
+| `Auth.loadProfile()` (`layout.ts` admin) | GET | `/users/usuarios/{id}/` | `id` = `user_id` del JWT. Bearer. | 200 objeto `User`. | `/users/usuarios/{id}/` | **hecho (2.7)**. El propio usuario o admin/super (cierra el IDOR de BUG-DJANGO-008 sin romper `loadProfile`); otro usuario -> 403. |
 
 `/token/refresh/` no se usa. NestJS lo implementa igual (`{refresh}` -> 200 `{access}`, sin rotacion ni blacklist) por ser endpoint del contrato (2.5).
 
@@ -122,7 +124,7 @@ delta.
 
 | Frontend | Metodo | Endpoint Django (`fe3fc98`) | Request | Response | Endpoint NestJS | Estado |
 |---|---|---|---|---|---|---|
-| `Users.getUsersPaginated()` | GET | `/users/usuarios/` | Query `page`, `page_size`, `username?`, `isActive?`. Bearer. | 200 `{count, next, previous, results: User[]}`. Excluye al usuario actual. Orden `username`. | `/users/usuarios/` | pendiente. Reforzar rol admin/super (BUG-DJANGO-008). |
+| `Users.getUsersPaginated()` | GET | `/users/usuarios/` | Query `page`, `page_size`, `username?`, `isActive?`. Bearer. | 200 `{count, next, previous, results: User[]}`. Excluye al usuario actual. Orden `username`. | `/users/usuarios/` | **hecho (2.7)**. `@Roles('admin')` (cierra BUG-DJANGO-008: antes cualquier autenticado enumeraba usuarios). |
 | `Users.createUser()` | POST | `/users/usuarios/` | JSON `{username, email, role, password}` (`role` = `admin`\|`user`). | 201 `{mensaje, data: User}` (FE ignora body). `admin`->`super` = 403. Duplicado = 400 `{error}`. | `/users/usuarios/` | **hecho (2.8)**. `@Roles('admin')`. `role` requerido (BUG-DJANGO-009). Reglas de contrasena (BUG-DJANGO-005, subset). Un solo hash argon2id (BUG-DJANGO-014). **Delta**: respuesta = objeto `User` plano 201 (no `{mensaje,data}`). Duplicado -> 400 `{error}`; `admin`->`super` -> 403 `{detail}`. |
 | `Users.updateUser()` | PUT | `/users/usuarios/{id}/` | JSON `{username, email, role}` (sin password). | 200 `{mensaje, data: User}` (FE ignora body). | `/users/usuarios/{id}/` | **hecho (2.9)**. `@Roles('admin')` + `admin`≠actúa sobre `super` (BUG-DJANGO-021). DTO sin `password` (BUG-DJANGO-010). **Delta**: respuesta = `User` plano 200. |
 | `Users.changeUserStatus()` | PUT | `/users/usuarios/cambiar-estado/{id}/` | Body `{}`. | 200 `{mensaje}`. Toggle `isActive`+`is_active`. | igual | **hecho (2.9)**. `@Roles('admin')`. Togglea **ambos** flags + `deletedAt`/`deletedBy` (BUG-DJANGO-020). Mantiene `{mensaje}` exacto de Django. |
