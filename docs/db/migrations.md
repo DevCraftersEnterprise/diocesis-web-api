@@ -148,7 +148,12 @@ de su tabla (ver `src/modules/users/entities/usuario.entity.ts` como referencia)
 8. **`1790176234495-CreateIsmaInformacion`** — Tarea 6.1. **Aditiva**: tabla nueva
    `isma_informacion` (recurso singleton, fila fija sembrada con todos los campos de
    texto vacios y telefonos en NULL). Aplicada al oraculo en la Tarea 6.1.
-9. ... deltas que surjan por finding/ADR.
+9. **`1790194012168-CreateCasoEspecialPreguntaFrecuente`** — Tarea 7.1, etapa ISMA
+   (`docs/instituto-biblico-isma.md` §3.3). **Aditiva**: tablas nuevas
+   `isma_caso_especial` y `isma_pregunta_frecuente` (sin contraparte en Django, sin fila
+   sembrada — el contenido de los 10 casos y las 8 preguntas del documento fuente lo
+   captura un admin). Aplicada al oraculo en la Tarea 7.1.
+10. ... deltas que surjan por finding/ADR.
 
 ### FASE 7 (articulos / noticias / documentos): **sin migracion**
 
