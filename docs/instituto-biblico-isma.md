@@ -302,6 +302,9 @@ en el `PUT` en vez de `@Roles('admin')`. 188 unit + 124 e2e verdes.
 | DELETE | `/instituto-biblico/capacitaciones/{id}/` | idem | 204 sin cuerpo |
 | POST | `/instituto-biblico/capacitaciones/habilitar/{id}/` | idem | 200 `{detail}` |
 
+**Estado (Tarea 4.1): implementado.** Migracion `CreateCapacitacionCurso` (dos tablas
+nuevas, sin datos que sembrar — catalogo vacio hasta que un admin cargue contenido real).
+
 ### Cursos
 
 | Método | Ruta | Auth | Notas |
@@ -311,6 +314,8 @@ en el `PUT` en vez de `@Roles('admin')`. 188 unit + 124 e2e verdes.
 | POST | `/instituto-biblico/cursos/` | `@ModuleAccess(...)` | `multipart/form-data` (`picture` opcional); `capacitacionId` validado con `assertFksExist` si viene |
 | PUT | `/instituto-biblico/cursos/{id}/` | idem | parcial, `multipart` |
 | DELETE / habilitar | — | idem | patrón estándar |
+
+**Estado (Tarea 4.1): implementado.**
 
 ### Sedes
 

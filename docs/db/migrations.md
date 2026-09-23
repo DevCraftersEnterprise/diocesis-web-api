@@ -130,7 +130,16 @@ de su tabla (ver `src/modules/users/entities/usuario.entity.ts` como referencia)
    de dominio (`<@` sobre `["instituto-biblico","isma"]`, mismo mecanismo que
    `usuarios_usuario_role_check`, ADR-004 DQ2-A). No toca `role`/`ROLE_RANK`. Aplicada al
    oraculo en la Tarea 2.1.
-5. ... deltas que surjan por finding/ADR.
+5. **`1790127173782-CreateInstitutoInformacion`** — Tarea 3.1. **Aditiva**: tabla nueva
+   `institutos_informacion` (recurso singleton, fila fija sembrada). Aplicada al oraculo
+   en la Tarea 3.1.
+6. **`1790128815037-CreateCapacitacionCurso`** — Tarea 4.1, etapa Instituto Biblico
+   (`docs/instituto-biblico-isma.md` §3.2). **Aditiva**: tablas nuevas
+   `institutos_capacitacion` y `institutos_curso` (sin contraparte en Django, sin fila
+   sembrada — catalogo vacio). `institutos_curso.capacitacionId_id` es FK **opcional**
+   a `institutos_capacitacion` (decision Tarea 0.1). `migration:generate` post-aplicacion
+   solo deja el ruido `*_like` de arriba. Aplicada al oraculo en la Tarea 4.1.
+7. ... deltas que surjan por finding/ADR.
 
 ### FASE 7 (articulos / noticias / documentos): **sin migracion**
 
