@@ -14,6 +14,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { CarouselModule } from './modules/carousel/carousel.module';
 import { DocumentsModule } from './modules/documents/documents.module';
 import { InstituteModule } from './modules/institute/institute.module';
+import { IsmaModule } from './modules/isma/isma.module';
 import { NewsModule } from './modules/news/news.module';
 import { ParishesModule } from './modules/parishes/parishes.module';
 import { ColoniesModule } from './modules/colonies/colonies.module';
@@ -67,6 +68,7 @@ import { UsersModule } from './modules/users/users.module';
     NewsModule,
     DocumentsModule,
     InstituteModule,
+    IsmaModule,
   ],
   controllers: [AppController],
   providers: [AppService],

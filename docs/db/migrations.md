@@ -145,7 +145,10 @@ de su tabla (ver `src/modules/users/entities/usuario.entity.ts` como referencia)
    `institutos_evento.cursoId_id`/`sedeId_id` son FKs **opcionales** a
    `institutos_curso`/`institutos_sede`. `migration:generate` post-aplicacion solo deja
    el ruido `*_like` de arriba. Aplicada al oraculo en la Tarea 5.1.
-8. ... deltas que surjan por finding/ADR.
+8. **`1790176234495-CreateIsmaInformacion`** — Tarea 6.1. **Aditiva**: tabla nueva
+   `isma_informacion` (recurso singleton, fila fija sembrada con todos los campos de
+   texto vacios y telefonos en NULL). Aplicada al oraculo en la Tarea 6.1.
+9. ... deltas que surjan por finding/ADR.
 
 ### FASE 7 (articulos / noticias / documentos): **sin migracion**
 
