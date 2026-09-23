@@ -284,6 +284,13 @@ sección transversal): `/` final, camelCase, `@Public()` en lecturas, paginació
 
 Sin `:id` en la URL (fila fija). Sin `POST`/`DELETE`/`habilitar`.
 
+**Estado (Tarea 3.1): `/instituto-biblico/informacion/` implementado.** Migracion
+`CreateInstitutoInformacion` (tabla nueva + fila sembrada con id fijo
+`00000000-0000-0000-0000-000000000001` y el titulo del documento fuente; `description`/
+contacto vacios a proposito, sin contenido institucional inventado). `ModuleAccessGuard`
+en el `PUT` en vez de `@Roles('admin')`. 188 unit + 124 e2e verdes.
+`/isma/informacion/` queda para FASE 6.
+
 ### Capacitaciones
 
 | Método | Ruta | Auth | Notas |
