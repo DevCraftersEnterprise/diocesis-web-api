@@ -139,7 +139,13 @@ de su tabla (ver `src/modules/users/entities/usuario.entity.ts` como referencia)
    sembrada — catalogo vacio). `institutos_curso.capacitacionId_id` es FK **opcional**
    a `institutos_capacitacion` (decision Tarea 0.1). `migration:generate` post-aplicacion
    solo deja el ruido `*_like` de arriba. Aplicada al oraculo en la Tarea 4.1.
-7. ... deltas que surjan por finding/ADR.
+7. **`1790175109069-CreateSedeEvento`** — Tarea 5.1, etapa Instituto Biblico
+   (`docs/instituto-biblico-isma.md` §3.2). **Aditiva**: tablas nuevas `institutos_sede`
+   y `institutos_evento` (sin contraparte en Django, sin fila sembrada).
+   `institutos_evento.cursoId_id`/`sedeId_id` son FKs **opcionales** a
+   `institutos_curso`/`institutos_sede`. `migration:generate` post-aplicacion solo deja
+   el ruido `*_like` de arriba. Aplicada al oraculo en la Tarea 5.1.
+8. ... deltas que surjan por finding/ADR.
 
 ### FASE 7 (articulos / noticias / documentos): **sin migracion**
 
