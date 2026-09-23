@@ -357,6 +357,11 @@ pública con capacitaciones/cursos.
 | POST / PUT | `/isma/casos-especiales/(:id/)` | `@ModuleAccess('isma')` | JSON |
 | DELETE / habilitar | — | idem | patrón estándar |
 
+**Estado (Tarea 7.1): implementado.** Se mantuvo la respuesta paginada uniforme del
+resto del proyecto (en vez de un endpoint plano dedicado) — con 10 filas cabe en una
+sola página igual, y el frontend pide `page_size` alto como ya hace con el resto de
+catálogos. Sin fila sembrada; el contenido de los 10 casos lo captura un admin.
+
 ### Preguntas frecuentes (ISMA)
 
 | Método | Ruta | Auth | Notas |
@@ -365,6 +370,9 @@ pública con capacitaciones/cursos.
 | GET | `/isma/preguntas-frecuentes/{id}/` | `@Public()` | |
 | POST / PUT | `/isma/preguntas-frecuentes/(:id/)` | `@ModuleAccess('isma')` | JSON |
 | DELETE / habilitar | — | idem | patrón estándar |
+
+**Estado (Tarea 7.1): implementado.** Misma decision que casos especiales: respuesta
+paginada uniforme, sin fila sembrada.
 
 ### Extensión de usuarios (existente, cambio aditivo)
 
