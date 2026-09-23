@@ -326,6 +326,8 @@ nuevas, sin datos que sembrar — catalogo vacio hasta que un admin cargue conte
 | POST / PUT | `/instituto-biblico/sedes/(:id/)` | `@ModuleAccess(...)` | `multipart` (`picture` opcional) |
 | DELETE / habilitar | — | idem | patrón estándar |
 
+**Estado (Tarea 5.1): implementado.**
+
 ### Eventos (calendario)
 
 | Método | Ruta | Auth | Notas |
@@ -334,6 +336,11 @@ nuevas, sin datos que sembrar — catalogo vacio hasta que un admin cargue conte
 | GET | `/instituto-biblico/eventos/{id}/` | `@Public()` | |
 | POST / PUT | `/instituto-biblico/eventos/(:id/)` | `@ModuleAccess(...)` | JSON |
 | DELETE / habilitar | — | idem | patrón estándar |
+
+**Estado (Tarea 5.1): implementado.** Se mantuvo la respuesta paginada uniforme del
+resto del proyecto (en vez de un endpoint plano dedicado); el widget de calendario del
+frontend pide el rango de fechas con `page_size` alto, igual que ya hace la página
+pública con capacitaciones/cursos.
 
 ### Casos especiales (ISMA)
 
