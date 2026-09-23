@@ -289,7 +289,13 @@ Sin `:id` en la URL (fila fija). Sin `POST`/`DELETE`/`habilitar`.
 `00000000-0000-0000-0000-000000000001` y el titulo del documento fuente; `description`/
 contacto vacios a proposito, sin contenido institucional inventado). `ModuleAccessGuard`
 en el `PUT` en vez de `@Roles('admin')`. 188 unit + 124 e2e verdes.
-`/isma/informacion/` queda para FASE 6.
+
+**Estado (Tarea 6.1): `/isma/informacion/` implementado.** Migracion
+`CreateIsmaInformacion` (tabla nueva + fila sembrada con id fijo
+`00000000-0000-0000-0000-000000000002`, todos los campos de texto vacios y telefonos en
+NULL — el contenido real, incluidos los telefonos documentados en la fuente, lo captura
+un admin desde el panel). `ModuleAccessGuard` con `@ModuleAccess('isma')` en el `PUT`.
+`/special-cases/` y `/faq/` quedan para FASE 7.
 
 ### Capacitaciones
 
