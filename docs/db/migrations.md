@@ -122,7 +122,15 @@ de su tabla (ver `src/modules/users/entities/usuario.entity.ts` como referencia)
    Django). Segura: datos actuales cumplen (documentos: 0 filas; usuarios: solo los 3
    roles). Las entidades declaran `@Check(name, expr)` -> `migration:generate` sigue
    limpio (solo el ruido `*_like`). Aplicada al oraculo en la Tarea 8.2.
-4. ... deltas que surjan por finding/ADR.
+4. **`1790126004826-AddModuleAccessToUsuario`** — Tarea 2.1, etapa Instituto Biblico /
+   ISMA (`docs/instituto-biblico-isma.md` §4/§7). **Aditiva**: anade `moduleAccess`
+   (jsonb, `NOT NULL DEFAULT '[]'::jsonb` — a diferencia del resto de columnas nuevas de
+   este proyecto, esta si declara `DEFAULT` de BD porque se anade a una tabla ya poblada
+   y el propio `ADD COLUMN` rellena las filas existentes sin backfill aparte) + `CHECK`
+   de dominio (`<@` sobre `["instituto-biblico","isma"]`, mismo mecanismo que
+   `usuarios_usuario_role_check`, ADR-004 DQ2-A). No toca `role`/`ROLE_RANK`. Aplicada al
+   oraculo en la Tarea 2.1.
+5. ... deltas que surjan por finding/ADR.
 
 ### FASE 7 (articulos / noticias / documentos): **sin migracion**
 
