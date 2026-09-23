@@ -1,9 +1,13 @@
 # Instituto Bíblico e ISMA — modelo de datos y contrato API (Tarea 1.1)
 
-**Estado: diseño aprobado por el usuario (decisiones de la Tarea 0.1), sin implementar.**
-Ningún archivo de código, entidad, migración ni endpoint descrito aquí existe todavía.
-Este documento es el contrato de referencia para las fases 2+ de esta nueva etapa
-(ver `docs/instituto-biblico-isma.md` §8, Roadmap).
+**Estado: implementado (FASE 1-8 completas).** Backend, frontend y navegación de las
+FASEs 1 a 8 del roadmap (§8) están en `dev`, con verificación cruzada de regresión hecha
+en la Tarea 8.1 (suite completa backend unit+e2e y frontend, mas cobertura nueva del
+filtro de `moduleAccess` en el sidebar admin — ver notas de Estado en cada sub-recurso
+de este documento y `layout.spec.ts` en el frontend). Este documento sigue siendo el
+contrato de referencia para mantenimiento. Registro interno de cursos, expediente ISMA,
+pagos y evaluaciones quedan explícitamente fuera de alcance de esta etapa (instrucciones
+originales de la Tarea 0.1, no repetidas en este documento).
 
 Origen: `instituto_biblico.md` y `requisitos_matrimonio_isma.md` (documentos de la
 Diócesis) + decisiones tomadas por el usuario en la Tarea 0.1 sobre 7 puntos abiertos.
@@ -424,36 +428,34 @@ Sin cambios de fondo respecto al propuesto en la Tarea 0.1, ahora con el detalle
 documento como base:
 
 - **FASE 1 — Decisiones + contrato.** ✅ Este documento.
-- **FASE 2 — Infraestructura compartida.** Spike de librería de calendario (decisión 2,
-  validar contra Angular 21 zoneless antes de comprometerla) + `ModuleAccessGuard`/
-  decorator + migración `AddModuleAccessToUsuario` + extensión de `users` (DTOs,
-  response, formulario de edición).
-- **FASE 3 — Instituto Bíblico: información general.** Backend (`information`) +
+- **FASE 2 — Infraestructura compartida.** ✅ Spike de librería de calendario (decisión 2,
+  validado contra Angular 21 zoneless) + `ModuleAccessGuard`/decorator + migración
+  `AddModuleAccessToUsuario` + extensión de `users` (DTOs, response, formulario de
+  edición).
+- **FASE 3 — Instituto Bíblico: información general.** ✅ Backend (`information`) +
   página pública + pantalla admin.
-- **FASE 4 — Instituto Bíblico: capacitaciones y cursos.** Backend (`trainings`,
+- **FASE 4 — Instituto Bíblico: capacitaciones y cursos.** ✅ Backend (`trainings`,
   `courses`) + público + admin.
-- **FASE 5 — Instituto Bíblico: sedes + calendario + integración con Noticias.**
-  Backend (`venues`, `events`) + frontend (incluye el widget de calendario) + activar
-  tag `instituto-biblico` en Noticias (sin cambios de backend, ver hallazgo original).
-- **FASE 6 — ISMA: información general.** Backend (`information`) + página pública
+- **FASE 5 — Instituto Bíblico: sedes + calendario + integración con Noticias.** ✅
+  Backend (`venues`, `events`) + frontend (widget de calendario real,
+  `@fullcalendar/angular`) + tag `instituto-biblico` activado en Noticias.
+- **FASE 6 — ISMA: información general.** ✅ Backend (`information`) + página pública
   organizada por secciones.
-- **FASE 7 — ISMA: casos especiales y preguntas frecuentes.** Backend (`special-cases`,
-  `faq`) + frontend (acordeón nuevo) + admin.
-- **FASE 8 — Integración final.** Navegación definitiva, filtro de `moduleAccess` en el
-  sidebar admin, verificación cruzada de que nada existente sufrió regresión.
+- **FASE 7 — ISMA: casos especiales y preguntas frecuentes.** ✅ Backend
+  (`special-cases`, `faq`) + frontend (acordeón) + admin.
+- **FASE 8 — Integración final.** ✅ Navegación definitiva verificada contra este
+  documento (§6): sidebar admin y navbar público coinciden 1:1 con las rutas
+  registradas, sin huérfanos. Filtro de `moduleAccess` en el sidebar admin cubierto por
+  test nuevo (`layout.spec.ts`, 8 casos: admin/super/roles combinados de acceso).
+  Verificación cruzada de regresión: suite completa backend (unit + e2e contra el
+  oráculo) y frontend, todas verdes, sin tocar código de los 10 módulos migrados
+  previamente.
 
 ---
 
-## Siguiente tarea propuesta
+## Estado final de la etapa
 
-**Tarea 2.1 — Spike de calendario + `ModuleAccessGuard`.**
-
-Dos piezas de infraestructura que bloquean todo lo demás si no se resuelven primero:
-validar que la librería de calendario elegida funciona limpio en Angular 21 zoneless
-(decisión 2), y construir el guard/decorator/migración de `moduleAccess` (decisión 6,
-la pieza de más riesgo de todo el diseño). Sin esto, ningún módulo de contenido nuevo
-tiene dónde apoyarse en materia de permisos, y el calendario de FASE 5 se diseñaría a
-ciegas.
-
-**No la implemento todavía** — quedo a la espera de tu autorización para empezarla,
-como en cada tarea de la migración.
+Las 8 fases del roadmap están implementadas y mergeadas a `dev` en ambos repos
+(`diocesis-backend-nest`, `diocesis-frontend-material`), cada una en su propia rama de
+fase con PR revisada y mergeada. `main` en ambos repos permanece sin promoción hasta
+que el usuario pruebe y apruebe el conjunto completo.
