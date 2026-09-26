@@ -14,6 +14,19 @@ export type UserRole = 'super' | 'admin' | 'user';
 export const USER_ROLES: readonly UserRole[] = ['super', 'admin', 'user'];
 
 /**
+ * Modulos nuevos (post-migracion, etapa Instituto Biblico / ISMA) que un usuario con
+ * `role: 'user'` puede administrar sin ser `admin`/`super` general. Ver
+ * `docs/instituto-biblico-isma.md` §4 — mecanismo deliberadamente separado de `role`
+ * (no es una jerarquia, es acceso por modulo).
+ */
+export type AppModuleName = 'instituto-biblico' | 'isma';
+
+export const MODULE_ACCESS_VALUES: readonly AppModuleName[] = [
+  'instituto-biblico',
+  'isma',
+];
+
+/**
  * Mapea `usuarios_usuario` (Django `AbstractBaseUser` + `PermissionsMixin` + `BaseModel`).
  *
  * Dualidad de "activo" (ADR-002 pto. 6, BUG-DJANGO-020):
@@ -36,6 +49,10 @@ export const USER_ROLES: readonly UserRole[] = ['super', 'admin', 'user'];
 @Unique('usuarios_usuario_username_key', ['username'])
 @Unique('usuarios_usuario_email_key', ['email'])
 @Check('usuarios_usuario_role_check', `"role" IN ('super','admin','user')`)
+@Check(
+  'usuarios_usuario_moduleaccess_check',
+  `"moduleAccess" <@ '["instituto-biblico","isma"]'::jsonb`,
+)
 export class Usuario extends BaseEntity {
   @Column('varchar', { length: 128 })
   password!: string;
@@ -60,6 +77,20 @@ export class Usuario extends BaseEntity {
 
   @Column('boolean', { name: 'is_active' })
   isActiveAuth!: boolean;
+
+  /**
+   * Acceso por modulo (Tarea 2.1). Excepcion consciente al resto de `BaseEntity`/
+   * `Usuario` (que nunca declaran `DEFAULT` de BD, ADR-004 pto. 5): esta columna se
+   * anade a una tabla ya poblada, y un `DEFAULT '[]'::jsonb` en la propia migracion
+   * rellena las filas existentes sin un paso de backfill aparte (ver migracion
+   * `AddModuleAccessToUsuario`). El `default` aqui existe solo para que
+   * `migration:generate` no proponga quitarlo.
+   */
+  @Column('jsonb', {
+    name: 'moduleAccess',
+    default: () => "'[]'",
+  })
+  moduleAccess!: AppModuleName[];
 
   @ManyToOne(() => Usuario, {
     nullable: true,

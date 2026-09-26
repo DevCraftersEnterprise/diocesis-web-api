@@ -66,4 +66,17 @@ describe('Usuario entity (mapeo de usuarios_usuario)', () => {
       ]),
     );
   });
+
+  it('declara moduleAccess (Tarea 2.1) como jsonb con el CHECK de dominio', () => {
+    expect(dbColumnName('moduleAccess')).toBe('moduleAccess');
+    const checks = storage.checks
+      .filter((c) => c.target === Usuario)
+      .map((c) => c.name);
+    expect(checks).toEqual(
+      expect.arrayContaining([
+        'usuarios_usuario_role_check',
+        'usuarios_usuario_moduleaccess_check',
+      ]),
+    );
+  });
 });

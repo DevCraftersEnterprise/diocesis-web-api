@@ -4,7 +4,11 @@ services:
     runtime: node
     plan: free
     region: oregon
-    buildCommand: npm ci && npm run build
+    # --include=dev: con NODE_ENV=production npm ci omitiria @nestjs/cli/typescript y el
+    # build fallaria. migration:run:prod aplica las migraciones pendientes en cada deploy
+    # (ADR-004, nota de 2026-09): si falla, el build falla y Render conserva el deploy
+    # anterior. La PRIMERA vez exige marcar el baseline a mano (docs/cutover-runbook.md §3).
+    buildCommand: npm ci --include=dev && npm run build && npm run migration:run:prod
     startCommand: npm run start:prod
     healthCheckPath: /health
     envVars:

@@ -1,15 +1,23 @@
-import type { Usuario, UserRole } from './entities/usuario.entity';
+import type {
+  AppModuleName,
+  Usuario,
+  UserRole,
+} from './entities/usuario.entity';
 
 /**
  * Forma de `UsuarioSerializer` de DRF. `updatedBy` / `deletedBy` son `StringRelatedField`
  * -> **username** (string) o `null`, NO objeto anidado. Sin `password`, `is_active`,
  * `is_staff`, `is_superuser`, `last_login`.
+ *
+ * `moduleAccess` (Tarea 2.1) es un campo **nuevo**, sin contraparte en Django — no existe
+ * delta de contrato que preservar aqui, es funcionalidad de esta etapa.
  */
 export interface UserResponse {
   id: string;
   username: string;
   email: string;
   role: UserRole;
+  moduleAccess: AppModuleName[];
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -32,6 +40,7 @@ export function toUserResponse(user: Usuario): UserResponse {
     username: user.username,
     email: user.email,
     role: user.role,
+    moduleAccess: user.moduleAccess,
     isActive: user.isActive,
     createdAt: iso(user.createdAt)!,
     updatedAt: iso(user.updatedAt)!,

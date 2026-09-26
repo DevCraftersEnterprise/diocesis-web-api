@@ -122,7 +122,38 @@ de su tabla (ver `src/modules/users/entities/usuario.entity.ts` como referencia)
    Django). Segura: datos actuales cumplen (documentos: 0 filas; usuarios: solo los 3
    roles). Las entidades declaran `@Check(name, expr)` -> `migration:generate` sigue
    limpio (solo el ruido `*_like`). Aplicada al oraculo en la Tarea 8.2.
-4. ... deltas que surjan por finding/ADR.
+4. **`1790126004826-AddModuleAccessToUsuario`** — Tarea 2.1, etapa Instituto Biblico /
+   ISMA (`docs/instituto-biblico-isma.md` §4/§7). **Aditiva**: anade `moduleAccess`
+   (jsonb, `NOT NULL DEFAULT '[]'::jsonb` — a diferencia del resto de columnas nuevas de
+   este proyecto, esta si declara `DEFAULT` de BD porque se anade a una tabla ya poblada
+   y el propio `ADD COLUMN` rellena las filas existentes sin backfill aparte) + `CHECK`
+   de dominio (`<@` sobre `["instituto-biblico","isma"]`, mismo mecanismo que
+   `usuarios_usuario_role_check`, ADR-004 DQ2-A). No toca `role`/`ROLE_RANK`. Aplicada al
+   oraculo en la Tarea 2.1.
+5. **`1790127173782-CreateInstitutoInformacion`** — Tarea 3.1. **Aditiva**: tabla nueva
+   `institutos_informacion` (recurso singleton, fila fija sembrada). Aplicada al oraculo
+   en la Tarea 3.1.
+6. **`1790128815037-CreateCapacitacionCurso`** — Tarea 4.1, etapa Instituto Biblico
+   (`docs/instituto-biblico-isma.md` §3.2). **Aditiva**: tablas nuevas
+   `institutos_capacitacion` y `institutos_curso` (sin contraparte en Django, sin fila
+   sembrada — catalogo vacio). `institutos_curso.capacitacionId_id` es FK **opcional**
+   a `institutos_capacitacion` (decision Tarea 0.1). `migration:generate` post-aplicacion
+   solo deja el ruido `*_like` de arriba. Aplicada al oraculo en la Tarea 4.1.
+7. **`1790175109069-CreateSedeEvento`** — Tarea 5.1, etapa Instituto Biblico
+   (`docs/instituto-biblico-isma.md` §3.2). **Aditiva**: tablas nuevas `institutos_sede`
+   y `institutos_evento` (sin contraparte en Django, sin fila sembrada).
+   `institutos_evento.cursoId_id`/`sedeId_id` son FKs **opcionales** a
+   `institutos_curso`/`institutos_sede`. `migration:generate` post-aplicacion solo deja
+   el ruido `*_like` de arriba. Aplicada al oraculo en la Tarea 5.1.
+8. **`1790176234495-CreateIsmaInformacion`** — Tarea 6.1. **Aditiva**: tabla nueva
+   `isma_informacion` (recurso singleton, fila fija sembrada con todos los campos de
+   texto vacios y telefonos en NULL). Aplicada al oraculo en la Tarea 6.1.
+9. **`1790194012168-CreateCasoEspecialPreguntaFrecuente`** — Tarea 7.1, etapa ISMA
+   (`docs/instituto-biblico-isma.md` §3.3). **Aditiva**: tablas nuevas
+   `isma_caso_especial` y `isma_pregunta_frecuente` (sin contraparte en Django, sin fila
+   sembrada — el contenido de los 10 casos y las 8 preguntas del documento fuente lo
+   captura un admin). Aplicada al oraculo en la Tarea 7.1.
+10. ... deltas que surjan por finding/ADR.
 
 ### FASE 7 (articulos / noticias / documentos): **sin migracion**
 

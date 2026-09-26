@@ -64,8 +64,57 @@ describe('Users write (e2e)', () => {
     createdIds.push(body.id as string);
     expect(body.username).toBe(username);
     expect(body.role).toBe('user');
+    expect(body.moduleAccess).toEqual([]);
     expect(body).not.toHaveProperty('password');
     expect(body).not.toHaveProperty('mensaje');
+  });
+
+  it('POST / con moduleAccess valido -> 201, se guarda y se devuelve (Tarea 2.1)', async () => {
+    const username = `e2e_ma_${randomUUID().slice(0, 8)}`;
+    const res = await request(app.getHttpServer())
+      .post(`${BASE}/`)
+      .set(auth(adminToken))
+      .send({
+        username,
+        email: `${username}@x.test`,
+        role: 'user',
+        password: 'una-clave-larga',
+        moduleAccess: ['isma'],
+      })
+      .expect(201);
+
+    const body = res.body as { id: string; moduleAccess: string[] };
+    createdIds.push(body.id);
+    expect(body.moduleAccess).toEqual(['isma']);
+    const row = await repo.findOneByOrFail({ id: body.id });
+    expect(row.moduleAccess).toEqual(['isma']);
+  });
+
+  it('POST / con moduleAccess invalido -> 400 { moduleAccess: [...] }', () =>
+    request(app.getHttpServer())
+      .post(`${BASE}/`)
+      .set(auth(adminToken))
+      .send({
+        username: `e2e_bad_ma_${randomUUID().slice(0, 6)}`,
+        email: 'bad-ma@x.test',
+        role: 'user',
+        password: 'una-clave-larga',
+        moduleAccess: ['no-existe'],
+      })
+      .expect(400)
+      .expect((r) => expect(r.body).toHaveProperty('moduleAccess')));
+
+  it('PUT /:id asigna moduleAccess sin tocar el resto (Tarea 2.1)', async () => {
+    const res = await request(app.getHttpServer())
+      .put(`${BASE}/${target.id}`)
+      .set(auth(adminToken))
+      .send({ moduleAccess: ['instituto-biblico', 'isma'] })
+      .expect(200);
+
+    const body = res.body as { moduleAccess: string[] };
+    expect(body.moduleAccess).toEqual(['instituto-biblico', 'isma']);
+    const row = await repo.findOneByOrFail({ id: target.id });
+    expect(row.moduleAccess).toEqual(['instituto-biblico', 'isma']);
   });
 
   it('POST / username duplicado -> 400 { error }', () =>

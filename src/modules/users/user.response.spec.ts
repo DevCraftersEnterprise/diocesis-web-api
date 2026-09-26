@@ -6,6 +6,7 @@ const base = {
   username: 'ana',
   email: 'ana@x.test',
   role: 'admin',
+  moduleAccess: ['isma'],
   isActive: true,
   createdAt: new Date('2025-01-02T03:04:05.000Z'),
   updatedAt: new Date('2025-02-03T04:05:06.000Z'),
@@ -13,7 +14,7 @@ const base = {
 } as unknown as Usuario;
 
 describe('toUserResponse', () => {
-  it('expone solo los campos de UsuarioSerializer y fechas en ISO', () => {
+  it('expone solo los campos de UsuarioSerializer (+ moduleAccess) y fechas en ISO', () => {
     const out = toUserResponse({
       ...base,
       updatedBy: { username: 'root' } as Usuario,
@@ -25,6 +26,7 @@ describe('toUserResponse', () => {
       username: 'ana',
       email: 'ana@x.test',
       role: 'admin',
+      moduleAccess: ['isma'],
       isActive: true,
       createdAt: '2025-01-02T03:04:05.000Z',
       updatedAt: '2025-02-03T04:05:06.000Z',

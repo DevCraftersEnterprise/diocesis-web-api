@@ -94,6 +94,7 @@ export class UsersService {
       username: dto.username,
       email: dto.email,
       role: dto.role,
+      moduleAccess: dto.moduleAccess ?? [],
       password: await this.passwords.hash(dto.password),
       isActive: true,
       isActiveAuth: true,
