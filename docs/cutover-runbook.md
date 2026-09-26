@@ -80,7 +80,10 @@ INSERT INTO migrations ("timestamp", name)
 VALUES (1788804486651, 'BaselineProductionSchema1788804486651');
 ```
 
-Despues, desde este repo, apuntando `DATABASE_URL` a produccion:
+Con el baseline marcado, **las 8 migraciones pendientes se aplican solas en el siguiente
+deploy de Render** (`buildCommand` de `render.yaml` corre `npm run migration:run:prod`; ver la nota
+de ADR-004). Este bloque manual solo hace falta para verificar antes del deploy o si se
+prefiere aplicarlas a mano, apuntando `DATABASE_URL` a produccion:
 
 ```powershell
 $env:DATABASE_URL = "postgresql://...produccion..."
@@ -90,12 +93,11 @@ npm run migration:run    # aplica las 8 migraciones aditivas pendientes
 npm run migration:show   # debe quedar 9x [X]
 ```
 
-> **Las migraciones NO se ejecutan solas en el deploy.** `render.yaml` arranca con
-> `npm run start:prod` (sin `migration:run`) y `migrationsRun` es `false` a proposito
-> (ADR-004). Si se despliega el codigo sin correr este paso, los endpoints de Instituto
-> Biblico / ISMA responden 500 (tablas inexistentes) y `usuarios_usuario.moduleAccess`
-> no existe, lo que rompe los usuarios. **Correr `migration:run` ANTES de dirigir trafico
-> al codigo nuevo.**
+> **El baseline es lo unico manual.** Si el primer deploy corre sin marcarlo, falla con
+> `relation "articulos_articulo" already exists` (fail-closed: Render conserva el deploy
+> anterior y no se toca nada). Ensayado con el flujo real del build. Sin correr las
+> migraciones, los endpoints de Instituto Biblico / ISMA darian 500 y `moduleAccess` no
+> existiria, por eso van dentro del `buildCommand` y no en el arranque.
 
 Las 8 migraciones pendientes:
 

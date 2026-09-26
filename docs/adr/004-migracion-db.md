@@ -136,3 +136,21 @@
   ejecuta en el corte a produccion.
 - (-) `django_*`/`auth_*` quedan como tablas muertas en la BD (limpieza opcional futura,
   destructiva -> fuera de alcance ahora).
+
+## Nota (2026-09): las migraciones pendientes corren en el build de Render
+
+La regla `synchronize: false` / `migrationsRun: false` **se mantiene**: la aplicacion nunca
+toca el esquema al arrancar. Lo que cambia es *quien* ejecuta `migration:run`: en vez de un
+paso manual olvidable, el `buildCommand` de `render.yaml` corre `npm run migration:run:prod`
+(CLI de TypeORM sobre el `DataSource` compilado en `dist/`) despues de compilar.
+
+- **Fail-closed**: si una migracion falla, el build falla y Render conserva el deploy
+  anterior en marcha; el codigo nuevo nunca sirve trafico contra un esquema a medias.
+- **Idempotente**: un deploy sin migraciones nuevas responde "No migrations are pending".
+- **Se usa el build y no `preDeployCommand`** porque este ultimo no existe en el plan free.
+- **Baseline, una sola vez y a mano** (runbook §3): el primer deploy contra produccion falla
+  con `relation ... already exists` si no se marco `BaselineProductionSchema` como aplicada.
+  No se automatiza a proposito: adivinar que "el esquema ya existe" seria mas peligroso que
+  fallar.
+- Las migraciones deben seguir siendo **aditivas y compatibles hacia atras**: durante el
+  build sigue sirviendo la version anterior con el esquema ya migrado.

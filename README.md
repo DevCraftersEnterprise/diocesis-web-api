@@ -247,7 +247,7 @@ gh pr create --base dev --head feat/mi-cambio
 
 ## 🚀 Despliegue
 
-[`render.yaml`](render.yaml) describe el servicio Render (`npm ci && npm run build`, `npm run start:prod`, `healthCheckPath: /health`, variables de entorno). El procedimiento completo del corte — rotación de secretos, alta del servicio, migraciones contra producción, corte de autenticación, cambio del frontend, smoke test y rollback — está en [`docs/cutover-runbook.md`](docs/cutover-runbook.md).
+[`render.yaml`](render.yaml) describe el servicio Render (build: `npm ci --include=dev && npm run build && npm run migration:run:prod`, que aplica las migraciones pendientes en cada deploy; arranque: `npm run start:prod`, `healthCheckPath: /health`, variables de entorno). El procedimiento completo del corte — rotación de secretos, alta del servicio, migraciones contra producción, corte de autenticación, cambio del frontend, smoke test y rollback — está en [`docs/cutover-runbook.md`](docs/cutover-runbook.md).
 
 ## 📚 Documentación
 
