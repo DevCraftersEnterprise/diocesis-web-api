@@ -80,20 +80,48 @@ INSERT INTO migrations ("timestamp", name)
 VALUES (1788804486651, 'BaselineProductionSchema1788804486651');
 ```
 
-Despues, desde este repo, apuntando `DATABASE_URL` a produccion:
+Con el baseline marcado, **las 8 migraciones pendientes se aplican solas en el siguiente
+deploy de Render** (`buildCommand` de `render.yaml` corre `npm run migration:run:prod`; ver la nota
+de ADR-004). Este bloque manual solo hace falta para verificar antes del deploy o si se
+prefiere aplicarlas a mano, apuntando `DATABASE_URL` a produccion:
 
 ```powershell
 $env:DATABASE_URL = "postgresql://...produccion..."
 $env:DATABASE_SSL = "true"
-npm run migration:show   # debe listar [X] Baseline, [ ] Carrusel, [ ] CheckTypeRole
-npm run migration:run    # aplica las 2 migraciones aditivas pendientes
-npm run migration:show   # debe quedar 3x [X]
+npm run migration:show   # debe listar [X] Baseline y 8x [ ] pendientes
+npm run migration:run    # aplica las 8 migraciones aditivas pendientes
+npm run migration:show   # debe quedar 9x [X]
 ```
 
-Ambas migraciones ya se probaron contra el oraculo (copia de produccion):
-`CarruselBasemodelFields` (backfill de `updatedAt` verificado 21/21) y
-`CheckTypeRoleDomain` (CHECK de dominio, datos actuales cumplen). Son **aditivas**: no
-borran columnas ni filas.
+> **El baseline es lo unico manual.** Si el primer deploy corre sin marcarlo, falla con
+> `relation "articulos_articulo" already exists` (fail-closed: Render conserva el deploy
+> anterior y no se toca nada). Ensayado con el flujo real del build. Sin correr las
+> migraciones, los endpoints de Instituto Biblico / ISMA darian 500 y `moduleAccess` no
+> existiria, por eso van dentro del `buildCommand` y no en el arranque.
+
+Las 8 migraciones pendientes:
+
+| Migracion | Efecto |
+|---|---|
+| `CarruselBasemodelFields` | Anade `updatedAt`/`deletedAt`/`updatedBy_id`/`deletedBy_id` a `carrusel_carrusel` (backfill de `updatedAt` verificado 21/21). |
+| `CheckTypeRoleDomain` | `CHECK` de dominio en `documentos.type` y `usuarios.role` (los datos actuales cumplen). |
+| `AddModuleAccessToUsuario` | Columna `moduleAccess` (jsonb, `DEFAULT '[]'`) + `CHECK`. |
+| `CreateInstitutoInformacion` | Tabla singleton + 1 fila sembrada (contenido vacio). |
+| `CreateCapacitacionCurso` | Tablas `institutos_capacitacion` e `institutos_curso`. |
+| `CreateSedeEvento` | Tablas `institutos_sede` e `institutos_evento`. |
+| `CreateIsmaInformacion` | Tabla singleton + 1 fila sembrada (campos vacios). |
+| `CreateCasoEspecialPreguntaFrecuente` | Tablas `isma_caso_especial` e `isma_pregunta_frecuente`. |
+
+Son **aditivas**: no borran columnas ni filas existentes. Ensayo (2026-09-26): las 8 se
+aplicaron sin error sobre una BD nueva cargada con `docs/db/baseline.sql` + baseline
+marcada como aplicada (Caso A), y un `migration:generate` posterior solo propuso el ruido
+`*_like` ya tolerado (ver `docs/db/migrations.md`). No se ensayaron con los datos reales
+de produccion; para eso, hacer antes el backup del paso 1 y correr primero contra una
+copia restaurada de ese dump.
+
+Tras aplicarlas, los textos de Instituto Biblico / ISMA (informacion general,
+capacitaciones, casos especiales, FAQ) estan **vacios** hasta que un admin los capture
+desde el panel.
 
 ## 4. Corte de autenticacion (ADR-002, decision D1-A: corte duro)
 
