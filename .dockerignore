@@ -1,0 +1,16 @@
+node_modules
+dist
+coverage
+.git
+.github
+
+# Secretos: nunca deben quedar en una capa de la imagen. En dev local
+# docker-compose.local.yml los inyecta con env_file / environment.
+.env
+.env.*
+!.env.example
+
+# Solo relevantes para el oráculo de paridad (datos reales, no se necesitan
+# para levantar la app)
+.venv-oracle
+docs/oracle/seed.local.sql
