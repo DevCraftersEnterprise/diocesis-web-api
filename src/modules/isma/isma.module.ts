@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { FaqModule } from './faq/faq.module';
+import { IsmaCursosModule } from './cursos/isma-cursos.module';
 import { IsmaInformationModule } from './information/isma-information.module';
 import { SpecialCasesModule } from './special-cases/special-cases.module';
 
@@ -9,6 +10,11 @@ import { SpecialCasesModule } from './special-cases/special-cases.module';
  * solo agrega sus imports para que `AppModule` importe uno solo.
  */
 @Module({
-  imports: [IsmaInformationModule, SpecialCasesModule, FaqModule],
+  imports: [
+    IsmaInformationModule,
+    SpecialCasesModule,
+    FaqModule,
+    IsmaCursosModule,
+  ],
 })
 export class IsmaModule {}
