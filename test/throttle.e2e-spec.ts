@@ -15,7 +15,7 @@ const LIMIT = 3;
 /**
  * SECURITY-006: rate limiting de los endpoints sensibles de auth. Baja el limite por env
  * antes de compilar el modulo (`configuration()` corre en `compile()`); el resto de la
- * suite usa `THROTTLE_AUTH_LIMIT=1000` de `.env.test`.
+ * suite usa un límite alto (`THROTTLE_AUTH_LIMIT`) para no bloquear los logins repetidos de cada spec.
  */
 describe('Rate limiting de auth (e2e)', () => {
   let app: INestApplication<App>;
