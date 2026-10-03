@@ -136,7 +136,9 @@ export class IsmaCursosService {
       });
     }
     if (query.modalidad) {
-      qb.andWhere('c.modalidad = :modalidad', { modalidad: query.modalidad });
+      qb.andWhere('c.modalidades @> :modalidad::jsonb', {
+        modalidad: JSON.stringify([query.modalidad]),
+      });
     }
   }
 
@@ -194,7 +196,7 @@ export class IsmaCursosService {
       id,
       parroquiaId: dto.parroquiaId,
       ...campos,
-      modalidad: dto.modalidad,
+      modalidades: dto.modalidades,
       telefonoInformes: dto.telefonoInformes ?? null,
       notas: dto.notas ?? null,
       isActive: true,
@@ -231,7 +233,7 @@ export class IsmaCursosService {
       updatedAt: new Date(),
     };
     if (dto.parroquiaId !== undefined) changes.parroquiaId = dto.parroquiaId;
-    if (dto.modalidad !== undefined) changes.modalidad = dto.modalidad;
+    if (dto.modalidades !== undefined) changes.modalidades = dto.modalidades;
     if (dto.telefonoInformes !== undefined) {
       changes.telefonoInformes = dto.telefonoInformes;
     }

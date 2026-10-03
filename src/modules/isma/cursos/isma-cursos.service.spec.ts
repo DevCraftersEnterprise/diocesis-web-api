@@ -24,7 +24,7 @@ const curso = (over: Partial<IsmaCurso> = {}): IsmaCurso => ({
   diaSemana: 2,
   horaInicio: '19:00',
   horaFin: '21:00',
-  modalidad: 'presencial',
+  modalidades: ['presencial'],
   telefonoInformes: '644 413 2819',
   notas: null,
   isActive: true,
@@ -81,7 +81,7 @@ const dto = (over: Record<string, unknown> = {}) =>
     diaSemana: 2,
     horaInicio: '19:00',
     horaFin: '21:00',
-    modalidad: 'presencial',
+    modalidades: ['presencial'],
     ...over,
   }) as never;
 

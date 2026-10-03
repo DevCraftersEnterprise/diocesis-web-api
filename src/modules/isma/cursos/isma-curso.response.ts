@@ -17,7 +17,7 @@ export interface IsmaCursoResponse {
   diaSemana: number | null;
   horaInicio: string | null;
   horaFin: string | null;
-  modalidad: string;
+  modalidades: string[];
   telefonoInformes: string | null;
   notas: string | null;
   isActive: boolean;
@@ -57,7 +57,7 @@ export function toIsmaCursoResponse(
     diaSemana: c.diaSemana,
     horaInicio: c.horaInicio,
     horaFin: c.horaFin,
-    modalidad: c.modalidad,
+    modalidades: c.modalidades,
     telefonoInformes: c.telefonoInformes,
     notas: c.notas,
     isActive: c.isActive,

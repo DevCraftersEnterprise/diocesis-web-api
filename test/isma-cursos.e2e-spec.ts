@@ -36,7 +36,7 @@ describe('ISMA — Cursos (calendarizacion) (e2e)', () => {
     diaSemana: 2,
     horaInicio: '19:00',
     horaFin: '21:00',
-    modalidad: 'presencial',
+    modalidades: ['presencial'],
   });
   const seedCurso = async (over: Partial<IsmaCurso> = {}): Promise<string> => {
     const id = randomUUID();
@@ -48,7 +48,7 @@ describe('ISMA — Cursos (calendarizacion) (e2e)', () => {
       diaSemana: null,
       horaInicio: null,
       horaFin: null,
-      modalidad: 'presencial',
+      modalidades: ['presencial'],
       telefonoInformes: null,
       notas: null,
       isActive: true,
@@ -183,6 +183,26 @@ describe('ISMA — Cursos (calendarizacion) (e2e)', () => {
       .expect((r) => expect(r.body).toHaveProperty('endDate'));
   });
 
+  it('POST gestion acepta una o ambas modalidades y rechaza ninguna', async () => {
+    const ambas = await request(app.getHttpServer())
+      .post(`${BASE}/gestion`)
+      .set(auth(adminToken))
+      .send({ ...validBody(), modalidades: ['presencial', 'en_linea'] })
+      .expect(201);
+    await repo.delete({ id: (ambas.body as { id: string }).id });
+    expect((ambas.body as { modalidades: string[] }).modalidades).toEqual([
+      'presencial',
+      'en_linea',
+    ]);
+
+    await request(app.getHttpServer())
+      .post(`${BASE}/gestion`)
+      .set(auth(adminToken))
+      .send({ ...validBody(), modalidades: [] })
+      .expect(400)
+      .expect((r) => expect(r.body).toHaveProperty('modalidades'));
+  });
+
   it('POST gestion con parroquia inexistente -> 400 { parroquiaId }', async () => {
     await request(app.getHttpServer())
       .post(`${BASE}/gestion`)
@@ -202,7 +222,7 @@ describe('ISMA — Cursos (calendarizacion) (e2e)', () => {
         diaSemana: null,
         horaInicio: null,
         horaFin: null,
-        modalidad: 'presencial',
+        modalidades: ['presencial'],
         telefonoInformes: null,
         notas: null,
         isActive: true,

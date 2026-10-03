@@ -1,4 +1,8 @@
 import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  ArrayUnique,
+  IsArray,
   IsIn,
   IsInt,
   IsNotEmpty,
@@ -19,6 +23,17 @@ import {
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const HORA_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+/** Uno o ambos valores: presencial y/o en linea. */
+function ModalidadesDecorators() {
+  return (target: object, key: string) => {
+    IsArray()(target, key);
+    ArrayMinSize(1, { message: 'Indica al menos una modalidad.' })(target, key);
+    ArrayMaxSize(2)(target, key);
+    ArrayUnique()(target, key);
+    IsIn(ISMA_MODALIDADES, { each: true })(target, key);
+  };
+}
 
 /** `POST /isma/cursos/gestion/` (JSON). */
 export class CreateIsmaCursoDto {
@@ -46,8 +61,8 @@ export class CreateIsmaCursoDto {
   @Matches(HORA_RE, { message: 'horaFin debe tener formato HH:MM (24 h).' })
   horaFin?: string;
 
-  @IsIn(ISMA_MODALIDADES)
-  modalidad!: IsmaModalidad;
+  @ModalidadesDecorators()
+  modalidades!: IsmaModalidad[];
 
   @IsOptional()
   @IsString()
@@ -88,8 +103,8 @@ export class UpdateIsmaCursoDto {
   horaFin?: string | null;
 
   @IsOptional()
-  @IsIn(ISMA_MODALIDADES)
-  modalidad?: IsmaModalidad;
+  @ModalidadesDecorators()
+  modalidades?: IsmaModalidad[];
 
   @IsOptional()
   @IsString()
@@ -108,6 +123,7 @@ export class ListIsmaCursoPublicQueryDto extends PaginationQueryDto {
   @IsUUID()
   parroquiaId?: string;
 
+  /** Cursos que se ofrecen en esta modalidad (incluye los que ofrecen ambas). */
   @IsOptional()
   @IsIn(ISMA_MODALIDADES)
   modalidad?: IsmaModalidad;
