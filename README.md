@@ -92,7 +92,7 @@ Todas las rutas cuelgan de `/api`. El health check está en `/health` (fuera del
 
 ## 🔧 Variables de entorno
 
-Copia `.env.example` a `.env`. `NODE_ENV=test` carga `.env.test`, que apunta al oráculo.
+Copia `.env.example` a `.env` y configura `DATABASE_URL`. Las pruebas e2e usan la misma configuración: apunta `DATABASE_URL` a una base de pruebas, nunca a producción.
 
 | Variable | Descripción |
 | --- | --- |

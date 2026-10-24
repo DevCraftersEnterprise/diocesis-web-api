@@ -8,7 +8,7 @@ import type { Config } from '../../config/config.types';
  * Nest (`app.useLogger(...)` en `main.ts`), asi que todo `Logger` de `@nestjs/common`
  * (incluido el de `AllExceptionsFilter`) sale por aqui.
  *
- * - Nivel desde `LOG_LEVEL` (`app-config.log.level`). En `.env.test` = `silent`.
+ * - Nivel desde `LOG_LEVEL` (`app-config.log.level`). En pruebas se configura como `silent`.
  * - `redact`: nunca se registran `Authorization`, cookies ni campos de contrasena.
  * - En desarrollo, salida legible via `pino-pretty`; en prod/test, JSON de una linea.
  * - `autoLogging`: una linea por peticion HTTP (metodo, ruta, status, latencia).

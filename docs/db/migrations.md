@@ -20,7 +20,7 @@ la app: carga `.env.<NODE_ENV>` y luego `.env` (el primero gana).
 | Objetivo | Comando |
 |---|---|
 | BD de desarrollo local (`.env`) | `npm run migration:run` |
-| Contenedor **oraculo** (`.env.test`, `:5433`) | `$env:NODE_ENV="test"; npm run migration:run` |
+| Contenedor **oraculo** (`DATABASE_URL` del `.env` apuntando a `:5433`) | `npm run migration:run` |
 | Otra BD puntual | `$env:DATABASE_URL="postgres://..."; npm run migration:run` |
 
 ## Comandos
