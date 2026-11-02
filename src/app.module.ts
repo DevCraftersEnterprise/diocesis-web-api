@@ -20,6 +20,7 @@ import { PaginaContenidoModule } from './modules/pages/pagina-contenido.module';
 import { ParishesModule } from './modules/parishes/parishes.module';
 import { ColoniesModule } from './modules/colonies/colonies.module';
 import { DecanatesModule } from './modules/decanates/decanates.module';
+import { DescargasModule } from './modules/downloads/descargas.module';
 import { ReverendsModule } from './modules/reverends/reverends.module';
 import { UsersModule } from './modules/users/users.module';
 
@@ -71,6 +72,7 @@ import { UsersModule } from './modules/users/users.module';
     InstituteModule,
     IsmaModule,
     PaginaContenidoModule,
+    DescargasModule,
   ],
   controllers: [AppController],
   providers: [AppService],
