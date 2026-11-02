@@ -15,10 +15,13 @@ import { CarouselModule } from './modules/carousel/carousel.module';
 import { DocumentsModule } from './modules/documents/documents.module';
 import { InstituteModule } from './modules/institute/institute.module';
 import { IsmaModule } from './modules/isma/isma.module';
+import { MultimediaModule } from './modules/multimedia/multimedia.module';
 import { NewsModule } from './modules/news/news.module';
+import { PaginaContenidoModule } from './modules/pages/pagina-contenido.module';
 import { ParishesModule } from './modules/parishes/parishes.module';
 import { ColoniesModule } from './modules/colonies/colonies.module';
 import { DecanatesModule } from './modules/decanates/decanates.module';
+import { DescargasModule } from './modules/downloads/descargas.module';
 import { ReverendsModule } from './modules/reverends/reverends.module';
 import { UsersModule } from './modules/users/users.module';
 
@@ -69,6 +72,9 @@ import { UsersModule } from './modules/users/users.module';
     DocumentsModule,
     InstituteModule,
     IsmaModule,
+    PaginaContenidoModule,
+    DescargasModule,
+    MultimediaModule,
   ],
   controllers: [AppController],
   providers: [AppService],

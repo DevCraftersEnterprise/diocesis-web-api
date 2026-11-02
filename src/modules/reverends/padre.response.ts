@@ -1,4 +1,4 @@
-import type { Padre } from './entities/padre.entity';
+import type { Padre, PadreRole } from './entities/padre.entity';
 
 /** Forma de `PadreSerializer` (DRF `fields='__all__'`). Sin `createdBy`. */
 export interface PadreResponse {
@@ -12,6 +12,10 @@ export interface PadreResponse {
   facebook: string | null;
   instagram: string | null;
   twitter: string | null;
+  role: PadreRole;
+  ordinationDate: string | null;
+  phone: string | null;
+  assignedCommunity: string | null;
   createdAt: string;
   updatedAt: string | null;
   deletedAt: string | null;
@@ -39,6 +43,10 @@ export function toPadreResponse(p: Padre): PadreResponse {
     facebook: p.facebook,
     instagram: p.instagram,
     twitter: p.twitter,
+    role: p.role,
+    ordinationDate: p.ordinationDate,
+    phone: p.phone,
+    assignedCommunity: p.assignedCommunity,
     createdAt: iso(p.createdAt)!,
     updatedAt: iso(p.updatedAt),
     deletedAt: iso(p.deletedAt),
