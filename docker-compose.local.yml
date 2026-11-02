@@ -1,0 +1,60 @@
+# Levanta el backend NestJS y el frontend Angular juntos, SOLO PARA DESARROLLO
+# LOCAL. No sustituye a Render (backend) ni al pipeline de despliegue del
+# frontend, y no incluye base de datos: usa la tuya propia o el oráculo de
+# paridad (docs/oracle/), levantado aparte.
+#
+# Requiere el layout de carpetas hermanas ya usado por docs/oracle/ (mismo
+# padre que este repo):
+#   diocesis-ecosystem/
+#   ├── diocesis-backend-nest       (este repo)
+#   └── diocesis-frontend-material
+#
+# Uso (desde este repo):
+#   docker compose -f docker-compose.local.yml up --build
+#   docker compose -f docker-compose.local.yml down
+#
+# El backend necesita un .env real en este repo (ver .env.example). Si
+# DATABASE_URL apunta a un Postgres publicado en el host (p. ej. el oráculo
+# en el puerto 5433), usa `host.docker.internal` en vez de `localhost`/
+# `127.0.0.1`, porque el contenedor no comparte la red del host:
+#   DATABASE_URL=postgresql://oracle:oracle@host.docker.internal:5433/diocesis_oracle
+#
+# CORS_ORIGINS del backend debe incluir http://localhost:4200 para que el
+# frontend pueda llamarlo.
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: diocesis-backend-local
+    env_file:
+      - .env
+    environment:
+      PORT: '3000'
+    ports:
+      - '3000:3000'
+    volumes:
+      - .:/app
+      - backend_node_modules:/app/node_modules
+    command: npm run start:dev
+
+  frontend:
+    build:
+      context: ../diocesis-frontend-material
+      dockerfile: Dockerfile
+    container_name: diocesis-frontend-local
+    ports:
+      - '4200:4200'
+    volumes:
+      - ../diocesis-frontend-material:/app
+      - frontend_node_modules:/app/node_modules
+    # --host 0.0.0.0: sin esto el servidor de Angular solo escucha dentro
+    # del contenedor y no es alcanzable desde el navegador del host.
+    command: npm start -- --host 0.0.0.0
+    depends_on:
+      - backend
+
+volumes:
+  backend_node_modules:
+  frontend_node_modules:
