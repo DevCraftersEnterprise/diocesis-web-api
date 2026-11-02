@@ -59,6 +59,14 @@ antes de reportar la tarea como hecha.
 - `NODE_ENV=production` activa `trust proxy` y cambia las carpetas de Cloudinary sin
   prefijo de entorno — no tocar esa lógica sin revisar `docs/cutover-runbook.md`.
 
+## CI y dependencias
+
+`.github/workflows/ci.yml` corre en cada PR hacia `dev`/`main` y en cada push a `dev`:
+lint, pruebas con cobertura (`npm run test:cov`) y build. Sin SonarQube (decisión
+explícita del cliente). `.github/dependabot.yml` abre PRs semanales de actualizaciones
+de npm y de GitHub Actions contra `dev`, igual que el resto del flujo — se revisan y
+aprueban como cualquier otro PR, nunca se auto-mergean.
+
 ## Git en Windows
 
 Si `git push`/`git commit` falla con errores de escritura en `.git/objects` ("fsync
