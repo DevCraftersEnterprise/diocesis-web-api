@@ -20,6 +20,10 @@ const padre = (over: Partial<Padre> = {}): Padre => ({
   facebook: null,
   instagram: null,
   twitter: null,
+  role: 'presbitero',
+  ordinationDate: null,
+  phone: null,
+  assignedCommunity: null,
   createdAt: new Date('2025-01-01T00:00:00Z'),
   updatedAt: new Date('2025-01-01T00:00:00Z'),
   deletedAt: null,
@@ -70,6 +74,16 @@ describe('PadresService', () => {
     expect(qb.skip).toHaveBeenCalled();
   });
 
+  it('list() filtra por role cuando se pide', async () => {
+    const { service, qb } = build(null, [
+      padre({ role: 'diacono_permanente' }),
+    ]);
+    await service.list({ role: 'diacono_permanente' } as never, false);
+    expect(qb.andWhere).toHaveBeenCalledWith('p.role = :role', {
+      role: 'diacono_permanente',
+    });
+  });
+
   it('detail() devuelve una fila soft-deleted', async () => {
     const { service } = build(padre({ isActive: false }));
     expect((await service.detail('p1')).isActive).toBe(false);
@@ -90,7 +104,33 @@ describe('PadresService', () => {
       Record<string, unknown>,
     ];
     expect(payload.picture).toBeNull();
+    expect(payload.role).toBe('presbitero');
     expect(payload).not.toHaveProperty('updatedById');
+  });
+
+  it('create() con role de diacono y fecha de ordenacion', async () => {
+    const { service, repo } = build(padre());
+    await service.create(
+      {
+        firstName: 'Jose',
+        lastName: 'Diaz',
+        birthDate: '1990-01-01',
+        role: 'diacono_transitorio',
+        ordinationDate: '2020-06-15',
+        phone: '6441234567',
+        assignedCommunity: 'Parroquia San Jose',
+      },
+      undefined,
+    );
+    const [payload] = (repo.insert as jest.Mock).mock.calls[0] as [
+      Record<string, unknown>,
+    ];
+    expect(payload).toMatchObject({
+      role: 'diacono_transitorio',
+      ordinationDate: '2020-06-15',
+      phone: '6441234567',
+      assignedCommunity: 'Parroquia San Jose',
+    });
   });
 
   it('create() con foto valida: valida, sube y guarda la secure_url', async () => {

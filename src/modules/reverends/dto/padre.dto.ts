@@ -1,6 +1,7 @@
 import { Transform, Type } from 'class-transformer';
 import {
   IsEmail,
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
@@ -12,6 +13,7 @@ import {
   ValidateIf,
 } from 'class-validator';
 import { PaginationQueryDto } from '../../../common/pagination';
+import { PADRE_ROLES, type PadreRole } from '../entities/padre.entity';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -47,6 +49,37 @@ class PadreSocialDto {
   @IsString()
   @MaxLength(200)
   twitter?: string | null;
+
+  /** Default 'presbitero' si se omite (ver `PadresService.create`). */
+  @IsOptional()
+  @Transform(emptyToNull)
+  @ValidateIf((o: PadreSocialDto) => o.role != null)
+  @IsIn(PADRE_ROLES, {
+    message: `role debe ser uno de: ${PADRE_ROLES.join(', ')}.`,
+  })
+  role?: PadreRole | null;
+
+  @IsOptional()
+  @Transform(emptyToNull)
+  @ValidateIf((o: PadreSocialDto) => o.ordinationDate != null)
+  @Matches(DATE_RE, {
+    message: 'ordinationDate debe tener formato YYYY-MM-DD.',
+  })
+  ordinationDate?: string | null;
+
+  @IsOptional()
+  @Transform(emptyToNull)
+  @ValidateIf((o: PadreSocialDto) => o.phone != null)
+  @IsString()
+  @MaxLength(20)
+  phone?: string | null;
+
+  @IsOptional()
+  @Transform(emptyToNull)
+  @ValidateIf((o: PadreSocialDto) => o.assignedCommunity != null)
+  @IsString()
+  @MaxLength(255)
+  assignedCommunity?: string | null;
 }
 
 /** `POST /padres/` (multipart). `picture` es el archivo, va aparte. */
@@ -102,6 +135,10 @@ export class ListPadresQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsString()
   lastName?: string;
+
+  @IsOptional()
+  @IsIn(PADRE_ROLES)
+  role?: PadreRole;
 
   @IsOptional()
   @Type(() => Number)

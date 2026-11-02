@@ -60,6 +60,9 @@ export class PadresService {
     if (query.lastName) {
       qb.andWhere('p.lastName ILIKE :ln', { ln: `%${query.lastName}%` });
     }
+    if (query.role) {
+      qb.andWhere('p.role = :role', { role: query.role });
+    }
     if (query.birthDay !== undefined) {
       qb.andWhere('EXTRACT(DAY FROM p.birthDate) = :bd', {
         bd: query.birthDay,
@@ -122,6 +125,10 @@ export class PadresService {
       facebook: dto.facebook ?? null,
       instagram: dto.instagram ?? null,
       twitter: dto.twitter ?? null,
+      role: dto.role ?? 'presbitero',
+      ordinationDate: dto.ordinationDate ?? null,
+      phone: dto.phone ?? null,
+      assignedCommunity: dto.assignedCommunity ?? null,
       picture: picture ? await this.uploadPicture(picture) : null,
       isActive: true,
       createdAt: now,
@@ -150,6 +157,10 @@ export class PadresService {
       'facebook',
       'instagram',
       'twitter',
+      'role',
+      'ordinationDate',
+      'phone',
+      'assignedCommunity',
     ] as const) {
       if (dto[key] !== undefined) changes[key] = dto[key] as never;
     }
